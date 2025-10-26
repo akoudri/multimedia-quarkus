@@ -70,7 +70,27 @@ public class ResourceEventPublisher {
      * @param resource The updated resource
      */
     public void publishResourceUpdated(Resource resource) {
-        //TODO
+        ResourceCreatedEvent event = new ResourceCreatedEvent(
+            resource.id,
+            resource.title,
+            resource.type.name(),
+            resource.year,
+            resource.createdAt,
+            resource.modifiedBy
+        );
+
+        LOG.infof("Publishing resource updated event: %s", event);
+
+        OutgoingRabbitMQMetadata metadata = new OutgoingRabbitMQMetadata.Builder()
+            .withRoutingKey("resource.updated")
+            .build();
+
+        Message<ResourceCreatedEvent> message = Message.of(event)
+            .addMetadata(metadata);
+
+        resourceEventsEmitter.send(message);
+
+        LOG.infof("Resource updated event published successfully for resource ID: %d", resource.id);
     }
 
     /**
@@ -80,6 +100,26 @@ public class ResourceEventPublisher {
      * @param title Title of the deleted resource
      */
     public void publishResourceDeleted(Long resourceId, String title) {
-        //TODO
+        ResourceCreatedEvent event = new ResourceCreatedEvent(
+            resourceId,
+            title,
+            null,
+            null,
+            null,
+            null
+        );
+
+        LOG.infof("Publishing resource deleted event: %s", event);
+
+        OutgoingRabbitMQMetadata metadata = new OutgoingRabbitMQMetadata.Builder()
+            .withRoutingKey("resource.deleted")
+            .build();
+
+        Message<ResourceCreatedEvent> message = Message.of(event)
+            .addMetadata(metadata);
+
+        resourceEventsEmitter.send(message);
+
+        LOG.infof("Resource deleted event published successfully for resource ID: %d", resourceId);
     }
 }

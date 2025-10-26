@@ -1,8 +1,9 @@
-package com.akfc.reviews.data;
+package com.akfc.data;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
+import io.smallrye.mutiny.Uni;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import org.hibernate.annotations.Cache;
@@ -15,11 +16,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Entity representing a review for a multimedia resource.
+ * REACTIVE Entity representing a review for a multimedia resource.
  * References resource and user by ID only (no JPA relationships as services have separate databases).
  *
- * This entity uses the ACTIVE RECORD pattern, inherited from PanacheEntityBase.
- * Business logic and persistence methods are defined directly in the entity.
+ * This entity uses the REACTIVE ACTIVE RECORD pattern, inherited from PanacheEntityBase.
+ * All methods return Uni<T> for non-blocking, reactive database access.
  *
  * Lifecycle Management:
  * - Automatic timestamps using Hibernate annotations
@@ -184,6 +185,8 @@ public class Review extends PanacheEntityBase {
     /**
      * Called automatically before entity is persisted for the first time.
      * Initializes default values for status, archived flag, and publication date.
+     *
+     * NOTE: Lifecycle callbacks remain synchronous even in reactive mode.
      */
     @PrePersist
     protected void onCreate() {
@@ -208,6 +211,8 @@ public class Review extends PanacheEntityBase {
     /**
      * Called automatically before entity is updated.
      * Validates business rules before save.
+     *
+     * NOTE: Lifecycle callbacks remain synchronous even in reactive mode.
      */
     @PreUpdate
     protected void onUpdate() {
@@ -217,113 +222,113 @@ public class Review extends PanacheEntityBase {
         }
     }
 
-    // ========== ACTIVE RECORD PATTERN - BUSINESS METHODS ==========
+    // ========== REACTIVE ACTIVE RECORD PATTERN - BUSINESS METHODS ==========
 
     /**
-     * Find all reviews for a specific resource.
+     * REACTIVE: Find all reviews for a specific resource.
      * Excludes archived reviews.
      *
      * @param resourceId Work ID
-     * @return List of reviews for the resource, ordered by publication date descending
+     * @return Uni containing list of reviews for the resource, ordered by publication date descending
      */
-    public static List<Review> findByWorkId(Long resourceId) {
+    public static Uni<List<Review>> findByWorkId(Long resourceId) {
         return list("resourceId = ?1 AND archived = false ORDER BY publicationDate DESC", resourceId);
     }
 
     /**
-     * Find all reviews by a specific user.
+     * REACTIVE: Find all reviews by a specific user.
      * Excludes archived reviews.
      *
      * @param userId User ID
-     * @return List of reviews by the user, ordered by publication date descending
+     * @return Uni containing list of reviews by the user, ordered by publication date descending
      */
-    public static List<Review> findByUserId(Long userId) {
+    public static Uni<List<Review>> findByUserId(Long userId) {
         return list("userId = ?1 AND archived = false ORDER BY publicationDate DESC", userId);
     }
 
     /**
-     * Find all approved reviews for a specific resource.
+     * REACTIVE: Find all approved reviews for a specific resource.
      *
      * @param resourceId Work ID
-     * @return List of approved reviews
+     * @return Uni containing list of approved reviews
      */
-    public static List<Review> findApprovedByWorkId(Long resourceId) {
+    public static Uni<List<Review>> findApprovedByWorkId(Long resourceId) {
         return list("resourceId = ?1 AND status = ?2 AND archived = false ORDER BY publicationDate DESC",
                    resourceId, ReviewStatus.APPROVED);
     }
 
     /**
-     * BUSINESS METHOD: Find pending reviews awaiting moderation.
+     * REACTIVE BUSINESS METHOD: Find pending reviews awaiting moderation.
      *
      * Returns all reviews with PENDING status that need moderator attention.
      * Ordered by creation date (oldest first) for FIFO processing.
      *
-     * @return List of pending reviews
+     * @return Uni containing list of pending reviews
      */
-    public static List<Review> findPendingReviews() {
+    public static Uni<List<Review>> findPendingReviews() {
         return list("status = ?1 AND archived = false ORDER BY createdAt ASC",
                    ReviewStatus.PENDING);
     }
 
     /**
-     * BUSINESS METHOD: Find flagged reviews.
+     * REACTIVE BUSINESS METHOD: Find flagged reviews.
      *
      * Returns reviews that have been flagged by users or moderators
      * for inappropriate content, spam, etc.
      *
-     * @return List of flagged reviews
+     * @return Uni containing list of flagged reviews
      */
-    public static List<Review> findFlaggedReviews() {
+    public static Uni<List<Review>> findFlaggedReviews() {
         return list("status = ?1 AND archived = false ORDER BY moderatedAt DESC",
                    ReviewStatus.FLAGGED);
     }
 
     /**
-     * BUSINESS METHOD: Find recently added reviews.
+     * REACTIVE BUSINESS METHOD: Find recently added reviews.
      *
      * Returns reviews created within the last N days.
      * Useful for "Recent Reviews" features.
      *
      * @param days Number of days to look back
-     * @return List of recent reviews
+     * @return Uni containing list of recent reviews
      */
-    public static List<Review> findRecentReviews(int days) {
+    public static Uni<List<Review>> findRecentReviews(int days) {
         LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
         return list("createdAt >= ?1 AND archived = false ORDER BY createdAt DESC",
                    cutoffDate);
     }
 
     /**
-     * Find all reviews with a specific rating.
+     * REACTIVE: Find all reviews with a specific rating.
      * Excludes archived reviews.
      *
      * @param rating Rating value (1-5)
-     * @return List of reviews with that rating
+     * @return Uni containing list of reviews with that rating
      */
-    public static List<Review> findByRating(Integer rating) {
+    public static Uni<List<Review>> findByRating(Integer rating) {
         return list("rating = ?1 AND archived = false ORDER BY publicationDate DESC", rating);
     }
 
     /**
-     * Find reviews for a resource with minimum rating threshold.
+     * REACTIVE: Find reviews for a resource with minimum rating threshold.
      *
      * @param resourceId Work ID
      * @param minRating Minimum rating (inclusive)
-     * @return List of reviews meeting criteria
+     * @return Uni containing list of reviews meeting criteria
      */
-    public static List<Review> findByWorkIdAndMinRating(Long resourceId, Integer minRating) {
+    public static Uni<List<Review>> findByWorkIdAndMinRating(Long resourceId, Integer minRating) {
         return list("resourceId = ?1 AND rating >= ?2 AND archived = false ORDER BY publicationDate DESC",
                    resourceId, minRating);
     }
 
     /**
-     * Calculate average rating for a resource.
+     * REACTIVE: Calculate average rating for a resource.
      * Only includes approved, non-archived reviews.
      *
      * @param resourceId Work ID
-     * @return Average rating or null if no reviews
+     * @return Uni containing average rating or null if no reviews
      */
-    public static Double getAverageRatingForWork(Long resourceId) {
+    public static Uni<Double> getAverageRatingForWork(Long resourceId) {
         return find("SELECT AVG(r.rating) FROM Review r WHERE r.resourceId = ?1 " +
                    "AND r.status = ?2 AND r.archived = false",
                    resourceId, ReviewStatus.APPROVED)
@@ -332,50 +337,51 @@ public class Review extends PanacheEntityBase {
     }
 
     /**
-     * Count reviews for a resource.
+     * REACTIVE: Count reviews for a resource.
      * Only includes approved, non-archived reviews.
      *
      * @param resourceId Work ID
-     * @return Count of reviews
+     * @return Uni containing count of reviews
      */
-    public static long countReviewsForWork(Long resourceId) {
+    public static Uni<Long> countReviewsForWork(Long resourceId) {
         return count("resourceId = ?1 AND status = ?2 AND archived = false",
                     resourceId, ReviewStatus.APPROVED);
     }
 
     /**
-     * Count reviews by a user.
+     * REACTIVE: Count reviews by a user.
      * Includes all statuses except archived.
      *
      * @param userId User ID
-     * @return Count of reviews
+     * @return Uni containing count of reviews
      */
-    public static long countReviewsByUser(Long userId) {
+    public static Uni<Long> countReviewsByUser(Long userId) {
         return count("userId = ?1 AND archived = false", userId);
     }
 
     /**
-     * Check if a user has already reviewed a resource.
+     * REACTIVE: Check if a user has already reviewed a resource.
      * Checks non-archived reviews only.
      *
      * @param userId User ID
      * @param resourceId Work ID
-     * @return True if user has reviewed the resource
+     * @return Uni containing true if user has reviewed the resource
      */
-    public static boolean userHasReviewedWork(Long userId, Long resourceId) {
-        return count("userId = ?1 AND resourceId = ?2 AND archived = false", userId, resourceId) > 0;
+    public static Uni<Boolean> userHasReviewedWork(Long userId, Long resourceId) {
+        return count("userId = ?1 AND resourceId = ?2 AND archived = false", userId, resourceId)
+                .map(count -> count > 0);
     }
 
-    // ========== PAGINATION EXAMPLES (Active Record Pattern) ==========
+    // ========== REACTIVE PAGINATION (Active Record Pattern) ==========
 
     /**
-     * PAGINATION: Find all reviews with pagination.
+     * REACTIVE PAGINATION: Find all reviews with pagination.
      *
      * @param pageIndex Page number (0-based)
      * @param pageSize Number of items per page
-     * @return List of reviews for the requested page
+     * @return Uni containing list of reviews for the requested page
      */
-    public static List<Review> findAllPaginated(int pageIndex, int pageSize) {
+    public static Uni<List<Review>> findAllPaginated(int pageIndex, int pageSize) {
         return find("archived = false",
                    Sort.by("createdAt").descending())
             .page(Page.of(pageIndex, pageSize))
@@ -383,14 +389,14 @@ public class Review extends PanacheEntityBase {
     }
 
     /**
-     * PAGINATION: Find reviews by resource with pagination.
+     * REACTIVE PAGINATION: Find reviews by resource with pagination.
      *
      * @param resourceId Work ID filter
      * @param pageIndex Page number (0-based)
      * @param pageSize Items per page
-     * @return Paginated reviews for the resource
+     * @return Uni containing paginated reviews for the resource
      */
-    public static List<Review> findByWorkIdPaginated(Long resourceId, int pageIndex, int pageSize) {
+    public static Uni<List<Review>> findByWorkIdPaginated(Long resourceId, int pageIndex, int pageSize) {
         return find("resourceId = ?1 AND status = ?2 AND archived = false",
                    Sort.by("publicationDate").descending(),
                    resourceId, ReviewStatus.APPROVED)
@@ -399,14 +405,14 @@ public class Review extends PanacheEntityBase {
     }
 
     /**
-     * PAGINATION: Find reviews by user with pagination.
+     * REACTIVE PAGINATION: Find reviews by user with pagination.
      *
      * @param userId User ID filter
      * @param pageIndex Page number (0-based)
      * @param pageSize Items per page
-     * @return Paginated reviews by the user
+     * @return Uni containing paginated reviews by the user
      */
-    public static List<Review> findByUserIdPaginated(Long userId, int pageIndex, int pageSize) {
+    public static Uni<List<Review>> findByUserIdPaginated(Long userId, int pageIndex, int pageSize) {
         return find("userId = ?1 AND archived = false",
                    Sort.by("createdAt").descending(),
                    userId)
@@ -415,23 +421,23 @@ public class Review extends PanacheEntityBase {
     }
 
     /**
-     * PAGINATION: Get total number of pages for approved reviews.
+     * REACTIVE PAGINATION: Get total number of pages for approved reviews.
      *
      * @param pageSize Items per page
-     * @return Total number of pages
+     * @return Uni containing total number of pages
      */
-    public static int getTotalPages(int pageSize) {
+    public static Uni<Integer> getTotalPages(int pageSize) {
         return find("status = ?1 AND archived = false", ReviewStatus.APPROVED)
             .page(Page.ofSize(pageSize))
             .pageCount();
     }
 
-    // ========== INSTANCE METHODS FOR LIFECYCLE MANAGEMENT ==========
+    // ========== REACTIVE INSTANCE METHODS FOR LIFECYCLE MANAGEMENT ==========
 
     // ========== CREATE ==========
 
     /**
-     * Create a new review and persist it to the database.
+     * REACTIVE: Create a new review and persist it to the database.
      *
      * This factory method creates a review with PENDING status by default.
      * Reviews start in PENDING state and require moderator approval.
@@ -441,9 +447,9 @@ public class Review extends PanacheEntityBase {
      * @param rating Rating from 1 to 5 stars
      * @param comment Review text/comment
      * @param createdBy User creating the review (typically same as userId)
-     * @return The created and persisted review
+     * @return Uni containing the created and persisted review
      */
-    public static Review create(Long resourceId, Long userId, Integer rating,
+    public static Uni<Review> create(Long resourceId, Long userId, Integer rating,
                                String comment, String createdBy) {
         Review review = new Review();
         review.resourceId = resourceId;
@@ -453,12 +459,11 @@ public class Review extends PanacheEntityBase {
         review.createdBy = createdBy;
         // status, archived, and publicationDate will be set by @PrePersist
 
-        review.persist();
-        return review;
+        return review.persist();
     }
 
     /**
-     * Create a review with custom publication date.
+     * REACTIVE: Create a review with custom publication date.
      *
      * Useful for importing historical reviews.
      *
@@ -468,21 +473,22 @@ public class Review extends PanacheEntityBase {
      * @param comment Review comment
      * @param publicationDate Custom publication date
      * @param createdBy User creating the review
-     * @return The created and persisted review
+     * @return Uni containing the created and persisted review
      */
-    public static Review create(Long resourceId, Long userId, Integer rating,
+    public static Uni<Review> create(Long resourceId, Long userId, Integer rating,
                                String comment, LocalDate publicationDate,
                                String createdBy) {
-        Review review = create(resourceId, userId, rating, comment, createdBy);
-        review.publicationDate = publicationDate;
-        review.persist();
-        return review;
+        return create(resourceId, userId, rating, comment, createdBy)
+                .chain(review -> {
+                    review.publicationDate = publicationDate;
+                    return review.persist();
+                });
     }
 
     // ========== UPDATE ==========
 
     /**
-     * Update this review's rating and comment.
+     * REACTIVE: Update this review's rating and comment.
      *
      * When a review is updated, it goes back to PENDING status
      * to be re-moderated (unless it was already rejected).
@@ -490,10 +496,13 @@ public class Review extends PanacheEntityBase {
      * @param rating New rating (1-5)
      * @param comment New comment text
      * @param modifiedBy User making the update (typically the review author)
+     * @return Uni containing the updated review
      */
-    public void update(Integer rating, String comment, String modifiedBy) {
+    public Uni<Review> update(Integer rating, String comment, String modifiedBy) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot update archived review. Restore it first.");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot update archived review. Restore it first.")
+            );
         }
 
         this.rating = rating;
@@ -509,18 +518,21 @@ public class Review extends PanacheEntityBase {
         }
 
         // updatedAt will be set automatically by @UpdateTimestamp
-        this.persist();
+        return this.persist();
     }
 
     /**
-     * Update only the rating.
+     * REACTIVE: Update only the rating.
      *
      * @param newRating New rating (1-5)
      * @param modifiedBy User making the change
+     * @return Uni containing the updated review
      */
-    public void updateRating(Integer newRating, String modifiedBy) {
+    public Uni<Review> updateRating(Integer newRating, String modifiedBy) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot update archived review");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot update archived review")
+            );
         }
         this.rating = newRating;
         this.modifiedBy = modifiedBy;
@@ -528,18 +540,21 @@ public class Review extends PanacheEntityBase {
         if (this.status == ReviewStatus.APPROVED) {
             this.status = ReviewStatus.PENDING;
         }
-        this.persist();
+        return this.persist();
     }
 
     /**
-     * Update only the comment.
+     * REACTIVE: Update only the comment.
      *
      * @param newComment New comment text
      * @param modifiedBy User making the change
+     * @return Uni containing the updated review
      */
-    public void updateComment(String newComment, String modifiedBy) {
+    public Uni<Review> updateComment(String newComment, String modifiedBy) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot update archived review");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot update archived review")
+            );
         }
         this.comment = newComment;
         this.modifiedBy = modifiedBy;
@@ -547,129 +562,143 @@ public class Review extends PanacheEntityBase {
         if (this.status == ReviewStatus.APPROVED) {
             this.status = ReviewStatus.PENDING;
         }
-        this.persist();
+        return this.persist();
     }
 
     // ========== MODERATION ==========
 
     /**
-     * Approve this review (moderation action).
+     * REACTIVE: Approve this review (moderation action).
      *
      * Sets status to APPROVED and records moderator information.
      *
      * @param moderatorId Moderator performing the approval
+     * @return Uni containing the approved review
      */
-    public void approve(String moderatorId) {
+    public Uni<Review> approve(String moderatorId) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot approve archived review");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot approve archived review")
+            );
         }
         this.status = ReviewStatus.APPROVED;
         this.moderatedBy = moderatorId;
         this.moderatedAt = LocalDateTime.now();
         this.modifiedBy = moderatorId;
         this.moderationReason = null; // Clear any previous reason
-        this.persist();
+        return this.persist();
     }
 
     /**
-     * Reject this review (moderation action).
+     * REACTIVE: Reject this review (moderation action).
      *
      * Sets status to REJECTED with a reason.
      *
      * @param reason Reason for rejection
      * @param moderatorId Moderator performing the rejection
+     * @return Uni containing the rejected review
      */
-    public void reject(String reason, String moderatorId) {
+    public Uni<Review> reject(String reason, String moderatorId) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot reject archived review");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot reject archived review")
+            );
         }
         this.status = ReviewStatus.REJECTED;
         this.moderationReason = reason;
         this.moderatedBy = moderatorId;
         this.moderatedAt = LocalDateTime.now();
         this.modifiedBy = moderatorId;
-        this.persist();
+        return this.persist();
     }
 
     /**
-     * Flag this review for attention (moderation action).
+     * REACTIVE: Flag this review for attention (moderation action).
      *
      * Sets status to FLAGGED, indicating it needs review for
      * inappropriate content, spam, etc.
      *
      * @param reason Reason for flagging
      * @param flaggedBy User or moderator flagging the review
+     * @return Uni containing the flagged review
      */
-    public void flag(String reason, String flaggedBy) {
+    public Uni<Review> flag(String reason, String flaggedBy) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot flag archived review");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot flag archived review")
+            );
         }
         this.status = ReviewStatus.FLAGGED;
         this.moderationReason = reason;
         this.moderatedBy = flaggedBy;
         this.moderatedAt = LocalDateTime.now();
         this.modifiedBy = flaggedBy;
-        this.persist();
+        return this.persist();
     }
 
     /**
-     * Reset review to pending status.
+     * REACTIVE: Reset review to pending status.
      *
      * Useful when a flagged review needs to be re-evaluated.
      *
      * @param moderatorId Moderator resetting the status
+     * @return Uni containing the reset review
      */
-    public void resetToPending(String moderatorId) {
+    public Uni<Review> resetToPending(String moderatorId) {
         if (Boolean.TRUE.equals(archived)) {
-            throw new IllegalStateException("Cannot reset archived review");
+            return Uni.createFrom().failure(
+                new IllegalStateException("Cannot reset archived review")
+            );
         }
         this.status = ReviewStatus.PENDING;
         this.moderationReason = null;
         this.moderatedBy = moderatorId;
         this.moderatedAt = LocalDateTime.now();
         this.modifiedBy = moderatorId;
-        this.persist();
+        return this.persist();
     }
 
     // ========== SOFT DELETE / ARCHIVE ==========
 
     /**
-     * Archive this review (soft delete).
+     * REACTIVE: Archive this review (soft delete).
      *
      * Soft delete keeps the record in the database but marks it as archived.
      * The review will be excluded from normal queries.
      *
      * @param reason Reason for archiving
      * @param archivedBy User performing the archive
+     * @return Uni containing the archived review
      */
-    public void archive(String reason, String archivedBy) {
+    public Uni<Review> archive(String reason, String archivedBy) {
         this.archived = true;
         this.archiveReason = reason;
         this.modifiedBy = archivedBy;
-        this.persist();
+        return this.persist();
     }
 
     /**
-     * Restore an archived review.
+     * REACTIVE: Restore an archived review.
      *
      * Unarchives the review and sets it back to pending status
      * for re-moderation.
      *
      * @param restoredBy User performing the restoration
+     * @return Uni containing the restored review
      */
-    public void restore(String restoredBy) {
+    public Uni<Review> restore(String restoredBy) {
         this.archived = false;
         this.archiveReason = null;
         this.modifiedBy = restoredBy;
         // Restored reviews go back to pending status
         this.status = ReviewStatus.PENDING;
-        this.persist();
+        return this.persist();
     }
 
     // ========== HARD DELETE ==========
 
     /**
-     * Permanently delete this review from the database.
+     * REACTIVE: Permanently delete this review from the database.
      *
      * WARNING: This is a hard delete and cannot be undone!
      * Use archive() for soft delete instead in most cases.
@@ -679,28 +708,32 @@ public class Review extends PanacheEntityBase {
      * - Legal requirements mandate data removal
      * - The review was created by mistake
      *
+     * @return Uni<Void> on successful deletion
      * @throws IllegalStateException if review is not archived first
      */
-    public void permanentlyDelete() {
+    public Uni<Void> permanentlyDelete() {
         if (Boolean.FALSE.equals(archived)) {
-            throw new IllegalStateException(
-                "Cannot permanently delete a non-archived review. Archive it first for safety.");
+            return Uni.createFrom().failure(
+                new IllegalStateException(
+                    "Cannot permanently delete a non-archived review. Archive it first for safety.")
+            );
         }
-        this.delete();
+        return this.delete();
     }
 
     /**
-     * Force delete without archiving first.
+     * REACTIVE: Force delete without archiving first.
      *
      * DANGEROUS: Use with extreme caution!
      * Only for legal compliance or emergency situations.
      *
      * @param confirmedBy Administrator confirming the deletion
+     * @return Uni<Void> on successful deletion
      */
-    public void forceDelete(String confirmedBy) {
+    public Uni<Void> forceDelete(String confirmedBy) {
         // Log or audit this dangerous operation
         this.modifiedBy = confirmedBy;
-        this.delete();
+        return this.delete();
     }
 
     // ========== UTILITY METHODS ==========
