@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<job id="cleanup-read-notifications" xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/jobXML_1_0.xsd"
+     version="1.0">
+
+    <properties>
+        <property name="job.description" value="Deletes all read notifications from the users database"/>
+        <property name="retention.days" value="7"/>
+    </properties>
+
+    <step id="deleteReadNotificationsStep">
+        <batchlet ref="deleteReadNotificationsBatchlet">
+            <properties>
+                <property name="retention.days" value="#{jobProperties['retention.days']}"/>
+            </properties>
+        </batchlet>
+    </step>
+
+</job>

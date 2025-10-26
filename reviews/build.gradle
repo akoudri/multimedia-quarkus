@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+// Module-specific dependencies can be added here
+dependencies {
+    // Hibernate ORM with Panache for JPA
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
+
+    // PostgreSQL JDBC driver
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+
+    // Bean Validation
+    implementation 'io.quarkus:quarkus-hibernate-validator'
+
+    // Caching
+    implementation 'io.quarkus:quarkus-cache'
+    implementation 'io.quarkus:quarkus-redis-cache'
+    implementation 'io.quarkus:quarkus-redis-client'
+
+    // REST and Error Handling
+    implementation 'io.quarkus:quarkus-rest-jackson'
+
+    // OpenAPI/Swagger Documentation
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+
+    // Observability - OpenTelemetry, Metrics, and Tracing
+    implementation 'io.quarkus:quarkus-opentelemetry'
+    implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+    implementation 'io.opentelemetry:opentelemetry-extension-trace-propagators'
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}

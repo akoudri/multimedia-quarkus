@@ -1,0 +1,25 @@
+plugins {
+    id 'io.quarkus'
+}
+
+dependencies {
+    // Quarkus core
+    implementation 'io.quarkus:quarkus-arc'
+
+    // JBeret (JSR-352 batch processing)
+    implementation 'io.quarkiverse.jberet:quarkus-jberet:2.6.0'
+
+    // Database
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+    implementation 'io.quarkus:quarkus-hibernate-orm'
+
+    // Scheduler for periodic execution
+    implementation 'io.quarkus:quarkus-scheduler'
+
+    // Logging
+    implementation 'io.quarkus:quarkus-logging-json'
+
+    // Testing
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}

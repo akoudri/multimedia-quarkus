@@ -1,0 +1,211 @@
+{#include layout/base title=resource.title}
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="/web/catalog">
+                <i class="fas fa-home"></i> Catalog
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{resource.title}</li>
+    </ol>
+</nav>
+
+<!-- Success/Error Messages -->
+{#include components/messages /}
+
+<!-- Resource Detail Card -->
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Resource Image -->
+        <div class="card mb-4">
+            {#if resource.illustrationUrl}
+            <img src="{resource.illustrationUrl}"
+                 class="card-img-top"
+                 alt="{resource.title}"
+                 style="max-height: 400px; object-fit: cover;"
+                 onerror="this.src='https://via.placeholder.com/400x600?text=No+Image'">
+            {#else}
+            <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 400px;">
+                <i class="fas fa-image fa-5x text-muted"></i>
+            </div>
+            {/if}
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0"><i class="fas fa-cog"></i> Actions</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a href="/web/catalog/{resource.id}/edit"
+                   class="list-group-item list-group-item-action">
+                    <i class="fas fa-edit text-secondary"></i> Edit Resource
+                </a>
+                <form method="POST" action="/web/catalog/{resource.id}/delete"
+                      onsubmit="return confirmDelete('{resource.title}')">
+                    <button type="submit" class="list-group-item list-group-item-action text-danger w-100 text-start">
+                        <i class="fas fa-trash"></i> Delete Resource
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Main Information Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-info-circle"></i> Resource Information
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Title -->
+                <h2 class="mb-3">{resource.title}</h2>
+
+                <!-- Type and Availability Badges -->
+                <div class="mb-3">
+                    <span class="badge badge-type fs-6
+                        {#switch resource.type}
+                            {#case 'BOOK'}bg-primary{/case}
+                            {#case 'MOVIE'}bg-danger{/case}
+                            {#case 'MUSIC'}bg-success{/case}
+                            {#case 'MAGAZINE'}bg-info{/case}
+                            {#case 'GAME'}bg-warning text-dark{/case}
+                        {/switch}">
+                        {#switch resource.type}
+                            {#case 'BOOK'}<i class="fas fa-book"></i>{/case}
+                            {#case 'MOVIE'}<i class="fas fa-film"></i>{/case}
+                            {#case 'MUSIC'}<i class="fas fa-music"></i>{/case}
+                            {#case 'MAGAZINE'}<i class="fas fa-newspaper"></i>{/case}
+                            {#case 'GAME'}<i class="fas fa-gamepad"></i>{/case}
+                        {/switch}
+                        {resource.type}
+                    </span>
+
+                    <span class="badge fs-6
+                        {#switch resource.status}
+                            {#case 'AVAILABLE'}bg-success{/case}
+                            {#case 'RESERVED'}bg-warning text-dark{/case}
+                            {#case 'UNAVAILABLE'}bg-secondary{/case}
+                        {/switch}">
+                        <i class="fas fa-circle"></i> {resource.status}
+                    </span>
+
+                    {#if resource.archived}
+                    <span class="badge bg-danger fs-6">
+                        <i class="fas fa-archive"></i> ARCHIVED
+                    </span>
+                    {/if}
+                </div>
+
+                <!-- Creator -->
+                <div class="mb-3">
+                    <h5 class="text-muted">
+                        <i class="fas fa-user"></i>
+                        {#switch resource.type}
+                            {#case 'BOOK'}Author{/case}
+                            {#case 'MOVIE'}Director{/case}
+                            {#case 'MUSIC'}Artist{/case}
+                            {#case 'MAGAZINE'}Publisher{/case}
+                            {#case 'GAME'}Developer{/case}
+                        {/switch}
+                    </h5>
+                    <p class="lead">{resource.creator}</p>
+                </div>
+
+                <!-- Year -->
+                <div class="mb-3">
+                    <h5 class="text-muted">
+                        <i class="fas fa-calendar"></i> Year
+                    </h5>
+                    <p class="lead">{resource.year}</p>
+                </div>
+
+                <!-- Keywords -->
+                {#if resource.keywords && !resource.keywords.isEmpty()}
+                <div class="mb-3">
+                    <h5 class="text-muted">
+                        <i class="fas fa-tags"></i> Keywords
+                    </h5>
+                    <div class="keywords-list">
+                        {#for keyword in resource.keywords}
+                        <span class="badge bg-light text-dark border fs-6">
+                            <i class="fas fa-tag"></i> {keyword}
+                        </span>
+                        {/for}
+                    </div>
+                </div>
+                {/if}
+            </div>
+        </div>
+
+        <!-- Metadata Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-database"></i> Metadata
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-4 text-muted">ID:</dt>
+                            <dd class="col-sm-8">
+                                <code>{resource.id}</code>
+                            </dd>
+
+                            <dt class="col-sm-4 text-muted">Created:</dt>
+                            <dd class="col-sm-8">
+                                <small>{resource.createdAt}</small>
+                            </dd>
+
+                            <dt class="col-sm-4 text-muted">Updated:</dt>
+                            <dd class="col-sm-8">
+                                <small>{resource.updatedAt}</small>
+                            </dd>
+                        </dl>
+                    </div>
+
+                    <div class="col-md-6">
+                        <dl class="row">
+                            {#if resource.illustrationUrl}
+                            <dt class="col-sm-4 text-muted">Image URL:</dt>
+                            <dd class="col-sm-8">
+                                <small>
+                                    <a href="{resource.illustrationUrl}" target="_blank" class="text-break">
+                                        {resource.illustrationUrl}
+                                    </a>
+                                </small>
+                            </dd>
+                            {/if}
+
+                            <dt class="col-sm-4 text-muted">Archived:</dt>
+                            <dd class="col-sm-8">
+                                <small>
+                                    {#if resource.archived}
+                                        <span class="badge bg-danger">Yes</span>
+                                    {#else}
+                                        <span class="badge bg-success">No</span>
+                                    {/if}
+                                </small>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Back Button -->
+<div class="mt-4">
+    <a href="/web/catalog" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Catalog
+    </a>
+</div>
+
+{/include}

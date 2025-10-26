@@ -1,0 +1,40 @@
+allprojects {
+    group 'com.library'
+    version '1.0.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    dependencies {
+        implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+        implementation 'io.quarkus:quarkus-rest'
+        implementation 'io.quarkus:quarkus-arc'
+
+        // Health checks for service monitoring
+        implementation 'io.quarkus:quarkus-smallrye-health'
+
+        // Messaging with RabbitMQ (includes reactive messaging)
+        implementation 'io.quarkus:quarkus-messaging-rabbitmq'
+
+        // Consul service registration (using REST client)
+        implementation 'io.quarkus:quarkus-rest-client-jackson'
+
+        testImplementation 'io.quarkus:quarkus-junit5'
+        testImplementation 'io.rest-assured:rest-assured'
+    }
+
+    test {
+        systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+    }
+}

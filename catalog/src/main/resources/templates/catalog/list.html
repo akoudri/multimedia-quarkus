@@ -1,0 +1,246 @@
+{#include layout/base title='Catalog Resources'}
+
+<!-- Page Header with Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h1 class="display-5">
+                    <i class="fas fa-book-open text-primary"></i>
+                    Catalog Resources
+                </h1>
+                <p class="text-muted">Manage your multimedia library collection</p>
+            </div>
+            <div>
+                <a href="/web/catalog/new" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus-circle"></i> Add New Resource
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+{#include components/messages /}
+
+<!-- Search and Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="/web/catalog" class="row g-3">
+            <div class="col-md-6">
+                <label for="search" class="form-label">
+                    <i class="fas fa-search"></i> Search by Title or Creator
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="search"
+                       name="search"
+                       placeholder="Enter title or creator name..."
+                       value="{searchQuery ?: ''}">
+            </div>
+            <div class="col-md-4">
+                <label for="type" class="form-label">
+                    <i class="fas fa-filter"></i> Filter by Type
+                </label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">All Types</option>
+                    <option value="BOOK" {#if filterType == 'BOOK'}selected{/if}>
+                        <i class="fas fa-book"></i> Books
+                    </option>
+                    <option value="MOVIE" {#if filterType == 'MOVIE'}selected{/if}>
+                        <i class="fas fa-film"></i> Movies
+                    </option>
+                    <option value="MUSIC" {#if filterType == 'MUSIC'}selected{/if}>
+                        <i class="fas fa-music"></i> Music
+                    </option>
+                    <option value="MAGAZINE" {#if filterType == 'MAGAZINE'}selected{/if}>
+                        <i class="fas fa-newspaper"></i> Magazines
+                    </option>
+                    <option value="GAME" {#if filterType == 'GAME'}selected{/if}>
+                        <i class="fas fa-gamepad"></i> Games
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+
+        <!-- Clear filters link -->
+        {#if searchQuery || filterType}
+        <div class="mt-2">
+            <a href="/web/catalog" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-times"></i> Clear Filters
+            </a>
+        </div>
+        {/if}
+    </div>
+</div>
+
+<!-- Results Info -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <strong>{resources.size()}</strong> resource{#if resources.size() != 1}s{/if} found
+        {#if searchQuery}
+            <span class="text-muted">for "{searchQuery}"</span>
+        {/if}
+        {#if filterType}
+            <span class="badge bg-info">{filterType}</span>
+        {/if}
+    </div>
+    <div class="text-muted">
+        Page {currentPage + 1} of {totalPages}
+    </div>
+</div>
+
+<!-- Resources Grid -->
+{#if resources.isEmpty()}
+    <!-- No Results -->
+    <div class="alert alert-info text-center py-5">
+        <i class="fas fa-inbox fa-3x mb-3"></i>
+        <h4>No resources found</h4>
+        <p class="mb-3">
+            {#if searchQuery || filterType}
+                Try adjusting your search filters or <a href="/web/catalog">view all resources</a>.
+            {#else}
+                Start by adding your first resource to the catalog.
+            {/if}
+        </p>
+        <a href="/web/catalog/new" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Add First Resource
+        </a>
+    </div>
+{#else}
+    <!-- Resource Cards -->
+    <div class="row g-4">
+        {#for resource in resources}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 resource-card">
+                <!-- Resource Image -->
+                {#if resource.illustrationUrl}
+                <img src="{resource.illustrationUrl}"
+                     class="card-img-top"
+                     alt="{resource.title}"
+                     onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                {#else}
+                <div class="card-img-top d-flex align-items-center justify-content-center bg-light">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                {/if}
+
+                <!-- Resource Body -->
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <!-- Resource Type Badge -->
+                        <span class="badge badge-type
+                            {#switch resource.type}
+                                {#case 'BOOK'}bg-primary{/case}
+                                {#case 'MOVIE'}bg-danger{/case}
+                                {#case 'MUSIC'}bg-success{/case}
+                                {#case 'MAGAZINE'}bg-info{/case}
+                                {#case 'GAME'}bg-warning text-dark{/case}
+                            {/switch}">
+                            {#switch resource.type}
+                                {#case 'BOOK'}<i class="fas fa-book"></i>{/case}
+                                {#case 'MOVIE'}<i class="fas fa-film"></i>{/case}
+                                {#case 'MUSIC'}<i class="fas fa-music"></i>{/case}
+                                {#case 'MAGAZINE'}<i class="fas fa-newspaper"></i>{/case}
+                                {#case 'GAME'}<i class="fas fa-gamepad"></i>{/case}
+                            {/switch}
+                            {resource.type}
+                        </span>
+
+                        <!-- Availability Status -->
+                        <span class="badge
+                            {#switch resource.status}
+                                {#case 'AVAILABLE'}bg-success{/case}
+                                {#case 'RESERVED'}bg-warning text-dark{/case}
+                                {#case 'UNAVAILABLE'}bg-secondary{/case}
+                            {/switch}">
+                            {resource.status}
+                        </span>
+                    </div>
+
+                    <h5 class="card-title">{resource.title}</h5>
+
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-user"></i> {resource.creator}
+                    </p>
+
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-calendar"></i> {resource.year}
+                    </p>
+
+                    <!-- Keywords -->
+                    {#if resource.keywords && !resource.keywords.isEmpty()}
+                    <div class="keywords-list mb-2">
+                        {#for keyword in resource.keywords}
+                        <span class="badge bg-light text-dark border">
+                            <i class="fas fa-tag"></i> {keyword}
+                        </span>
+                        {/for}
+                    </div>
+                    {/if}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-footer bg-white border-top-0">
+                    <div class="action-buttons d-flex justify-content-between">
+                        <a href="/web/catalog/{resource.id}"
+                           class="btn btn-sm btn-outline-primary"
+                           title="View Details">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <a href="/web/catalog/{resource.id}/edit"
+                           class="btn btn-sm btn-outline-secondary"
+                           title="Edit Resource">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <form method="POST" action="/web/catalog/{resource.id}/delete"
+                              onsubmit="return confirmDelete('{resource.title}')"
+                              class="d-inline">
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Delete Resource">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {/for}
+    </div>
+
+    <!-- Pagination -->
+    {#if totalPages > 1}
+    <nav aria-label="Resource pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <!-- Previous Button -->
+            <li class="page-item {#if !hasPrevPage}disabled{/if}">
+                <a class="page-link"
+                   href="/web/catalog?page={prevPage}&size={pageSize}{#if searchQuery}&search={searchQuery}{/if}{#if filterType}&type={filterType}{/if}">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+            </li>
+
+            <!-- Current Page Info -->
+            <li class="page-item active">
+                <span class="page-link">Page {nextPage} of {totalPages}</span>
+            </li>
+
+            <!-- Next Button -->
+            <li class="page-item {#if !hasNextPage}disabled{/if}">
+                <a class="page-link"
+                   href="/web/catalog?page={nextPage}&size={pageSize}{#if searchQuery}&search={searchQuery}{/if}{#if filterType}&type={filterType}{/if}">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {/if}
+{/if}
+
+{/include}

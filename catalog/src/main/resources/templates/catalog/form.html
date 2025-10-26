@@ -1,0 +1,295 @@
+{#include layout/base title=(isEdit ? 'Edit Resource' : 'Create New Resource')}
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="/web/catalog">
+                <i class="fas fa-home"></i> Catalog
+            </a>
+        </li>
+        {#if isEdit && resource}
+        <li class="breadcrumb-item">
+            <a href="/web/catalog/{resource.id}">{resource.title}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        {#else}
+        <li class="breadcrumb-item active" aria-current="page">New Resource</li>
+        {/if}
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5">
+            {#if isEdit}
+                <i class="fas fa-edit text-secondary"></i> Edit Resource
+            {#else}
+                <i class="fas fa-plus-circle text-primary"></i> Create New Resource
+            {/if}
+        </h1>
+        <p class="text-muted">
+            {#if isEdit}
+                Update the information for this resource
+            {#else}
+                Add a new resource to your multimedia library
+            {/if}
+        </p>
+    </div>
+</div>
+
+<!-- Error Messages -->
+{#if errors}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fas fa-exclamation-circle"></i>
+    <strong>Validation Failed!</strong> Please correct the errors below.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{/if}
+
+<!-- Resource Form -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST"
+                      action="/web/catalog{#if isEdit && resource}/{resource.id}{/if}"
+                      novalidate>
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label">
+                            <i class="fas fa-heading"></i> Title
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control {#if errors && errors.get('title')}is-invalid{/if}"
+                               id="title"
+                               name="title"
+                               value="{#if resource}{resource.title}{/if}"
+                               required
+                               minlength="1"
+                               maxlength="255"
+                               placeholder="Enter resource title">
+                        <div class="invalid-feedback">
+                            {#if errors && errors.get('title')}
+                                {errors.get('title')}
+                            {#else}
+                                Title is required (1-255 characters)
+                            {/if}
+                        </div>
+                    </div>
+
+                    <!-- Type (only for create) -->
+                    {#if !isEdit}
+                    <div class="mb-3">
+                        <label for="type" class="form-label">
+                            <i class="fas fa-layer-group"></i> Resource Type
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select {#if errors && errors.get('type')}is-invalid{/if}"
+                                id="type"
+                                name="type"
+                                required>
+                            <option value="">Select a type...</option>
+                            {#for type in resourceTypes}
+                            <option value="{type}" {#if resource && resource.type == type}selected{/if}>
+                                {#switch type}
+                                    {#case 'BOOK'}Book{/case}
+                                    {#case 'MOVIE'}Movie{/case}
+                                    {#case 'MUSIC'}Music{/case}
+                                    {#case 'MAGAZINE'}Magazine{/case}
+                                    {#case 'GAME'}Game{/case}
+                                {/switch}
+                            </option>
+                            {/for}
+                        </select>
+                        <div class="invalid-feedback">
+                            {#if errors && errors.get('type')}
+                                {errors.get('type')}
+                            {#else}
+                                Resource type is required
+                            {/if}
+                        </div>
+                    </div>
+                    {#else}
+                    <!-- Display type as read-only when editing -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-layer-group"></i> Resource Type
+                        </label>
+                        <div>
+                            <span class="badge fs-6
+                                {#switch resource.type}
+                                    {#case 'BOOK'}bg-primary{/case}
+                                    {#case 'MOVIE'}bg-danger{/case}
+                                    {#case 'MUSIC'}bg-success{/case}
+                                    {#case 'MAGAZINE'}bg-info{/case}
+                                    {#case 'GAME'}bg-warning text-dark{/case}
+                                {/switch}">
+                                {resource.type}
+                            </span>
+                            <small class="text-muted">(cannot be changed)</small>
+                        </div>
+                    </div>
+                    {/if}
+
+                    <!-- Creator -->
+                    <div class="mb-3">
+                        <label for="creator" class="form-label">
+                            <i class="fas fa-user"></i>
+                            {#if resource && resource.type == 'BOOK'}Author{/if}
+                            {#if resource && resource.type == 'MOVIE'}Director{/if}
+                            {#if resource && resource.type == 'MUSIC'}Artist{/if}
+                            {#if resource && resource.type == 'MAGAZINE'}Publisher{/if}
+                            {#if resource && resource.type == 'GAME'}Developer{/if}
+                            {#if !resource}Author / Creator{/if}
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control {#if errors && errors.get('creator')}is-invalid{/if}"
+                               id="creator"
+                               name="creator"
+                               value="{#if resource}{resource.creator}{/if}"
+                               required
+                               maxlength="255"
+                               placeholder="Enter creator name">
+                        <div class="invalid-feedback">
+                            {#if errors && errors.get('creator')}
+                                {errors.get('creator')}
+                            {#else}
+                                Creator is required
+                            {/if}
+                        </div>
+                    </div>
+
+                    <!-- Year -->
+                    <div class="mb-3">
+                        <label for="year" class="form-label">
+                            <i class="fas fa-calendar"></i> Year
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="number"
+                               class="form-control {#if errors && errors.get('year')}is-invalid{/if}"
+                               id="year"
+                               name="year"
+                               value="{#if resource}{resource.year}{/if}"
+                               required
+                               min="1000"
+                               max="9999"
+                               placeholder="e.g., 2024">
+                        <div class="invalid-feedback">
+                            {#if errors && errors.get('year')}
+                                {errors.get('year')}
+                            {#else}
+                                Year is required (1000-9999)
+                            {/if}
+                        </div>
+                        <div class="form-text">
+                            Publication, release, or creation year
+                        </div>
+                    </div>
+
+                    <!-- Image URL -->
+                    <div class="mb-3">
+                        <label for="illustrationUrl" class="form-label">
+                            <i class="fas fa-image"></i> Image URL
+                        </label>
+                        <input type="url"
+                               class="form-control {#if errors && errors.get('illustrationUrl')}is-invalid{/if}"
+                               id="illustrationUrl"
+                               name="illustrationUrl"
+                               value="{#if resource}{resource.illustrationUrl.orEmpty}{/if}"
+                               maxlength="500"
+                               placeholder="https://example.com/image.jpg">
+                        <div class="invalid-feedback">
+                            {#if errors && errors.get('illustrationUrl')}
+                                {errors.get('illustrationUrl')}
+                            {/if}
+                        </div>
+                        <div class="form-text">
+                            Optional. Provide a URL to an image for this resource (max 500 characters).
+                        </div>
+                    </div>
+
+                    <!-- Image Preview -->
+                    {#if resource && resource.illustrationUrl}
+                    <div class="mb-3">
+                        <label class="form-label">Current Image</label>
+                        <div>
+                            <img src="{resource.illustrationUrl}"
+                                 alt="Resource preview"
+                                 class="img-thumbnail"
+                                 style="max-width: 200px; max-height: 200px;"
+                                 onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    {/if}
+
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between border-top pt-3 mt-4">
+                        <a href="/web/catalog{#if isEdit && resource}/{resource.id}{/if}"
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            {#if isEdit}
+                                <i class="fas fa-save"></i> Save Changes
+                            {#else}
+                                <i class="fas fa-plus-circle"></i> Create Resource
+                            {/if}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-info-circle text-info"></i> Tips
+                </h6>
+                <ul class="mb-0 small text-muted">
+                    <li>Fields marked with <span class="text-danger">*</span> are required</li>
+                    <li>Title and creator must be between 1-255 characters</li>
+                    <li>Year must be between 1000 and 9999</li>
+                    <li>Image URL should point to a publicly accessible image (max 500 characters)</li>
+                    <li>{#if !isEdit}Resource type cannot be changed after creation{/if}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+    // Bootstrap form validation
+    (function() {
+        'use strict';
+
+        // Fetch form
+        const form = document.querySelector('form');
+
+        // Add submit event listener
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            form.classList.add('was-validated');
+        }, false);
+
+        // Live image preview
+        const imageUrlInput = document.getElementById('illustrationUrl');
+        if (imageUrlInput) {
+            imageUrlInput.addEventListener('blur', function() {
+                // Optional: Add live image preview functionality
+            });
+        }
+    })();
+</script>
+
+{/include}

@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+}
+
+// Module-specific dependencies can be added here
+dependencies {
+    // Hibernate ORM with Panache for JPA
+    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
+
+    // PostgreSQL JDBC driver
+    implementation 'io.quarkus:quarkus-jdbc-postgresql'
+
+    // Bean Validation
+    implementation 'io.quarkus:quarkus-hibernate-validator'
+
+    // Caching
+    implementation 'io.quarkus:quarkus-cache'
+    implementation 'io.quarkus:quarkus-redis-cache'
+    implementation 'io.quarkus:quarkus-redis-client'
+
+    // REST and Error Handling
+    implementation 'io.quarkus:quarkus-rest-jackson'
+
+    // REST Client for external API calls
+    implementation 'io.quarkus:quarkus-rest-client-jackson'
+
+    // SmallRye Fault Tolerance for resilience patterns
+    implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
+
+    // Qute Template Engine for Web UI
+    implementation 'io.quarkus:quarkus-rest-qute'
+
+    // OpenAPI/Swagger Documentation
+    implementation 'io.quarkus:quarkus-smallrye-openapi'
+
+    // Observability - OpenTelemetry, Metrics, and Tracing
+    implementation 'io.quarkus:quarkus-opentelemetry'
+    implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+    implementation 'io.opentelemetry:opentelemetry-extension-trace-propagators'
+
+    // Test dependencies
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'io.quarkus:quarkus-test-common'
+    testImplementation 'io.quarkus:quarkus-junit5-mockito'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'io.quarkus:quarkus-panache-mock'
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:postgresql:1.19.3'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}

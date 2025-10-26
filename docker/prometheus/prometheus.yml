@@ -1,0 +1,90 @@
+# Prometheus Configuration for Bibliothèque Multimédia Services
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'multimedia-library'
+    environment: 'development'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: []
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Catalog Service
+  - job_name: 'catalog-service'
+    metrics_path: '/q/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          service: 'catalog'
+          application: 'multimedia-library'
+          tier: 'backend'
+
+  # Users Service
+  - job_name: 'users-service'
+    metrics_path: '/q/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+        labels:
+          service: 'users'
+          application: 'multimedia-library'
+          tier: 'backend'
+
+  # Reviews Service
+  - job_name: 'reviews-service'
+    metrics_path: '/q/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8083']
+        labels:
+          service: 'reviews'
+          application: 'multimedia-library'
+          tier: 'backend'
+
+  # PostgreSQL Exporters (if you add them later)
+  # - job_name: 'postgres-catalog'
+  #   static_configs:
+  #     - targets: ['catalog-postgres-exporter:9187']
+
+  # Redis Exporter (if you add it later)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+
+  # RabbitMQ metrics
+  - job_name: 'rabbitmq'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['rabbitmq:15692']
+        labels:
+          service: 'rabbitmq'
+          application: 'multimedia-library'
+          tier: 'messaging'
+
+  # Jaeger metrics (internal metrics from Jaeger itself)
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+        labels:
+          service: 'jaeger'
+          application: 'multimedia-library'
+          tier: 'observability'

@@ -1,0 +1,239 @@
+volumes:
+  catalog-data:
+  reviews-data:
+  users-data:
+  pgadmin-data:
+  redis-data:
+  traefik_letsencrypt:
+  consul-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
+  jaeger-data:
+
+networks:
+  library-network:
+    name: library-network
+    driver: bridge
+
+services:
+  pgadmin4:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    hostname: pgadmin4
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "${PGADMIN_EMAIL}"
+      PGADMIN_DEFAULT_PASSWORD: "${PGADMIN_PASSWORD}"
+    volumes:
+      - "pgadmin-data:/var/lib/pgadmin4/storage:Z"
+    networks:
+      - library-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`${DOMAIN}`) && PathPrefix(`/pgadmin4`)"
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls.certresolver=letsencrypt"
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.pgadmin-headers.headers.customrequestheaders.X-Script-Name=/pgadmin4"
+      - "traefik.http.routers.pgadmin.middlewares=pgadmin-headers"
+
+  catalog-postgres:
+    image: postgres:16-alpine
+    container_name: catalog-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${APP_DB_USER}"
+      POSTGRES_PASSWORD: "${APP_DB_PASSWORD}"
+      POSTGRES_DB: "${CAT_DB_NAME}"
+    volumes:
+      - "catalog-data:/var/lib/postgresql/data:Z"
+    ports:
+      - "5432:5432"
+    networks:
+      - library-network
+
+  reviews-postgres:
+    image: postgres:16-alpine
+    container_name: reviews-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${APP_DB_USER}"
+      POSTGRES_PASSWORD: "${APP_DB_PASSWORD}"
+      POSTGRES_DB: "${REVIEWS_DB_NAME}"
+    volumes:
+      - "reviews-data:/var/lib/postgresql/data:Z"
+    ports:
+      - "6543:5432"
+    networks:
+      - library-network
+
+  users-postgres:
+    image: postgres:16-alpine
+    container_name: users-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${APP_DB_USER}"
+      POSTGRES_PASSWORD: "${APP_DB_PASSWORD}"
+      POSTGRES_DB: "${USERS_DB_NAME}"
+    volumes:
+      - "users-data:/var/lib/postgresql/data:Z"
+    ports:
+      - "7654:5432"
+    networks:
+      - library-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - "redis-data:/data:Z"
+    ports:
+      - "6379:6379"
+    networks:
+      - library-network
+
+  consul:
+    image: hashicorp/consul:1.19
+    container_name: consul
+    restart: unless-stopped
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+    volumes:
+      - "consul-data:/consul/data:Z"
+    ports:
+      - "8500:8500"  # HTTP API and Web UI
+      - "8600:8600/udp"  # DNS
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:-admin}"
+    volumes:
+      - "rabbitmq-data:/var/lib/rabbitmq:Z"
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # Management UI
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik:ro
+      - traefik_letsencrypt:/letsencrypt
+    environment:
+      - TRAEFIK_API_DASHBOARD=true
+      - TRAEFIIK_PROVIDERS_DOCKER=true
+      - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
+      - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
+      - TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${EMAIL}
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/letsencrypt/acme.json
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.service=api@internal"
+    networks:
+      - library-network
+
+  # Observability Stack
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: jaeger
+    restart: unless-stopped
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - METRICS_STORAGE_TYPE=prometheus
+      - PROMETHEUS_SERVER_URL=http://prometheus:9090
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+      - "14250:14250"  # Jaeger gRPC
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus-data:/prometheus:Z
+    ports:
+      - "9090:9090"
+    networks:
+      - library-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:11.2.2
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana-data:/var/lib/grafana:Z
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - library-network
+    depends_on:
+      - prometheus
+      - jaeger
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
