@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reactive-reviews/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/reactive-reviews/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/GreetingResourceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/GreetingResourceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,7 +78,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "SHELLCHECK.PATH": "/home/ali/.local/share/JetBrains/IdeaIC2025.2/Shell Script/shellcheck",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "solutions",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/home/ali/Training/quarkus-training/multimedia-library",
     "settings.editor.selected.configurable": "preferences.pluginManager"
