@@ -3,6 +3,9 @@ plugins {
 }
 
 dependencies {
+    // Shared configuration module
+    implementation project(':shared-config')
+
     // Quarkus core
     implementation 'io.quarkus:quarkus-arc'
 

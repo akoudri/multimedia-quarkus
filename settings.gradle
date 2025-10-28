@@ -11,6 +11,7 @@ pluginManagement {
 
 rootProject.name = 'multimedia-library'
 
+include 'shared-config'
 include 'catalog'
 include 'users'
 include 'reviews'

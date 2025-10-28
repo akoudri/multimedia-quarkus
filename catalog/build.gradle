@@ -5,6 +5,9 @@ plugins {
 
 // Module-specific dependencies can be added here
 dependencies {
+    // Shared configuration module
+    implementation project(':shared-config')
+
     // Hibernate ORM with Panache for JPA
     implementation 'io.quarkus:quarkus-hibernate-orm-panache'
 
