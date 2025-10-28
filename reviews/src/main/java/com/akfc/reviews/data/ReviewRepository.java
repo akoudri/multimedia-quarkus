@@ -38,13 +38,13 @@ public class ReviewRepository implements PanacheRepository<Review> {
 
     /**
      * NATIVE QUERY EXAMPLE 1: Get average rating and review count per resource.
-     * <p>
+     *
      * Native SQL queries bypass JPA/JPQL and execute directly against the database.
      * Use when:
      * - You need database-specific features
      * - Complex aggregations are easier in SQL
      * - Performance optimization requires specific SQL
-     * <p>
+     *
      * This query demonstrates:
      * - Aggregation functions (AVG, COUNT)
      * - GROUP BY clause
@@ -53,8 +53,21 @@ public class ReviewRepository implements PanacheRepository<Review> {
      *
      * @return List of Object arrays: [resourceId, avgRating, reviewCount, lastReviewDate]
      */
-    public List<Object> getAverageRatingPerResourceNative() {
-        return Collections.emptyList();
+    public List<Object[]> getAverageRatingPerWorkNative() {
+        String sql = """
+            SELECT
+                resource_id,
+                ROUND(AVG(rating)::numeric, 2) as avg_rating,
+                COUNT(*) as review_count,
+                MAX(publication_date) as last_review_date
+            FROM reviews
+            WHERE status = 'APPROVED' AND archived = false
+            GROUP BY resource_id
+            ORDER BY avg_rating DESC, review_count DESC
+            """;
+
+        Query query = em.createNativeQuery(sql);
+        return query.getResultList();
     }
 
     /**
@@ -66,8 +79,27 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Object array: [resourceId, avgRating, reviewCount, rating1Count, rating2Count,
      *         rating3Count, rating4Count, rating5Count]
      */
-    public List<Object> getWorkReviewStatsNative(Long resourceId) {
-        return Collections.emptyList();
+    public Object[] getWorkReviewStatsNative(Long resourceId) {
+        String sql = """
+            SELECT
+                resource_id,
+                ROUND(AVG(rating)::numeric, 2) as avg_rating,
+                COUNT(*) as total_reviews,
+                COUNT(CASE WHEN rating = 1 THEN 1 END) as rating_1_count,
+                COUNT(CASE WHEN rating = 2 THEN 1 END) as rating_2_count,
+                COUNT(CASE WHEN rating = 3 THEN 1 END) as rating_3_count,
+                COUNT(CASE WHEN rating = 4 THEN 1 END) as rating_4_count,
+                COUNT(CASE WHEN rating = 5 THEN 1 END) as rating_5_count
+            FROM reviews
+            WHERE resource_id = ?1 AND status = 'APPROVED' AND archived = false
+            GROUP BY resource_id
+            """;
+
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, resourceId);
+
+        List<Object[]> results = query.getResultList();
+        return results.isEmpty() ? null : results.get(0);
     }
 
     /**
@@ -78,8 +110,23 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @param limit Maximum number of users to return
      * @return List of Object arrays: [userId, reviewCount, avgRating, lastReviewDate]
      */
-    public List<Object> getMostActiveReviewersNative(int limit) {
-        return Collections.emptyList();
+    public List<Object[]> getMostActiveReviewersNative(int limit) {
+        String sql = """
+            SELECT
+                user_id,
+                COUNT(*) as review_count,
+                ROUND(AVG(rating)::numeric, 2) as avg_rating_given,
+                MAX(created_at) as last_review_date
+            FROM reviews
+            WHERE archived = false
+            GROUP BY user_id
+            ORDER BY review_count DESC, last_review_date DESC
+            LIMIT ?1
+            """;
+
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, limit);
+        return query.getResultList();
     }
 
     /**
@@ -90,8 +137,33 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return List of Object arrays: [status, totalCount, avgRating,
      *         rating1-5 counts, oldestDate, newestDate]
      */
-    public List<Object> getReviewDistributionByStatusNative() {
-        return Collections.emptyList();
+    public List<Object[]> getReviewDistributionByStatusNative() {
+        String sql = """
+            SELECT
+                status,
+                COUNT(*) as total_count,
+                ROUND(AVG(rating)::numeric, 2) as avg_rating,
+                COUNT(CASE WHEN rating = 1 THEN 1 END) as rating_1,
+                COUNT(CASE WHEN rating = 2 THEN 1 END) as rating_2,
+                COUNT(CASE WHEN rating = 3 THEN 1 END) as rating_3,
+                COUNT(CASE WHEN rating = 4 THEN 1 END) as rating_4,
+                COUNT(CASE WHEN rating = 5 THEN 1 END) as rating_5,
+                MIN(created_at) as oldest_review,
+                MAX(created_at) as newest_review
+            FROM reviews
+            WHERE archived = false
+            GROUP BY status
+            ORDER BY
+                CASE status
+                    WHEN 'PENDING' THEN 1
+                    WHEN 'APPROVED' THEN 2
+                    WHEN 'FLAGGED' THEN 3
+                    WHEN 'REJECTED' THEN 4
+                END
+            """;
+
+        Query query = em.createNativeQuery(sql);
+        return query.getResultList();
     }
 
     /**
@@ -103,8 +175,23 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @param minReviewCount Minimum number of reviews required
      * @return List of Object arrays: [resourceId, avgRating, reviewCount]
      */
-    public List<Object> findResourcesWithLowRatingsNative(double maxRating, int minReviewCount) {
-        return Collections.emptyList();
+    public List<Object[]> findResourcesWithLowRatingsNative(double maxRating, int minReviewCount) {
+        String sql = """
+            SELECT
+                resource_id,
+                ROUND(AVG(rating)::numeric, 2) as avg_rating,
+                COUNT(*) as review_count
+            FROM reviews
+            WHERE status = 'APPROVED' AND archived = false
+            GROUP BY resource_id
+            HAVING AVG(rating) <= ?1 AND COUNT(*) >= ?2
+            ORDER BY avg_rating ASC, review_count DESC
+            """;
+
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, maxRating);
+        query.setParameter(2, minReviewCount);
+        return query.getResultList();
     }
 
     // ========== CRITERIA API EXAMPLES ==========
@@ -131,7 +218,42 @@ public class ReviewRepository implements PanacheRepository<Review> {
                                             Integer minRating,
                                             ReviewStatus status,
                                             LocalDate publishedAfter) {
-        return Collections.emptyList();
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Review> cq = cb.createQuery(Review.class);
+        Root<Review> review = cq.from(Review.class);
+
+        // Build predicates dynamically
+        List<Predicate> predicates = new ArrayList<>();
+
+        // Always exclude archived
+        predicates.add(cb.isFalse(review.get("archived")));
+
+        if (resourceId != null) {
+            predicates.add(cb.equal(review.get("resourceId"), resourceId));
+        }
+
+        if (userId != null) {
+            predicates.add(cb.equal(review.get("userId"), userId));
+        }
+
+        if (minRating != null) {
+            predicates.add(cb.greaterThanOrEqualTo(review.get("rating"), minRating));
+        }
+
+        if (status != null) {
+            predicates.add(cb.equal(review.get("status"), status));
+        }
+
+        if (publishedAfter != null) {
+            predicates.add(cb.greaterThanOrEqualTo(
+                review.get("publicationDate"), publishedAfter
+            ));
+        }
+
+        cq.where(cb.and(predicates.toArray(new Predicate[0])));
+        cq.orderBy(cb.desc(review.get("createdAt")));
+
+        return em.createQuery(cq).getResultList();
     }
 
     /**
@@ -143,7 +265,39 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Map of rating (1-5) to count
      */
     public Map<Integer, Long> getRatingDistributionCriteria(Long resourceId) {
-        return Collections.emptyMap();
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Object[]> cq = cb.createQuery(Object[].class);
+        Root<Review> review = cq.from(Review.class);
+
+        // SELECT rating, COUNT(*)
+        cq.multiselect(
+            review.get("rating"),
+            cb.count(review)
+        );
+
+        // WHERE resourceId = ? AND status = APPROVED AND archived = false
+        cq.where(
+            cb.and(
+                cb.equal(review.get("resourceId"), resourceId),
+                cb.equal(review.get("status"), ReviewStatus.APPROVED),
+                cb.isFalse(review.get("archived"))
+            )
+        );
+
+        // GROUP BY rating
+        cq.groupBy(review.get("rating"));
+
+        // ORDER BY rating
+        cq.orderBy(cb.asc(review.get("rating")));
+
+        List<Object[]> results = em.createQuery(cq).getResultList();
+
+        Map<Integer, Long> distribution = new HashMap<>();
+        for (Object[] row : results) {
+            distribution.put((Integer) row[0], (Long) row[1]);
+        }
+
+        return distribution;
     }
 
     // ========== PAGINATION WITH REPOSITORY PATTERN ==========
@@ -156,7 +310,10 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Paginated reviews
      */
     public List<Review> findAllPaginated(int pageIndex, int pageSize) {
-        return Collections.emptyList();
+        return find("archived = false",
+                   Sort.by("createdAt").descending())
+            .page(Page.of(pageIndex, pageSize))
+            .list();
     }
 
     /**
@@ -174,7 +331,32 @@ public class ReviewRepository implements PanacheRepository<Review> {
                                                         ReviewStatus status,
                                                         int pageIndex,
                                                         int pageSize) {
-        return null;
+        // Build dynamic query
+        StringBuilder query = new StringBuilder("archived = false");
+        List<Object> params = new ArrayList<>();
+
+        if (resourceId != null) {
+            query.append(" AND resourceId = ?").append(params.size() + 1);
+            params.add(resourceId);
+        }
+
+        if (status != null) {
+            query.append(" AND status = ?").append(params.size() + 1);
+            params.add(status);
+        }
+
+        Sort sort = Sort.by("createdAt").descending();
+
+        var paged = find(query.toString(), sort, params.toArray())
+            .page(Page.of(pageIndex, pageSize));
+
+        return new PaginatedResult<>(
+            paged.list(),
+            pageIndex,
+            pageSize,
+            paged.pageCount(),
+            paged.count()
+        );
     }
 
     // ========== CRUD OPERATIONS ==========
@@ -194,7 +376,15 @@ public class ReviewRepository implements PanacheRepository<Review> {
      */
     public Review createReview(Long resourceId, Long userId, Integer rating,
                               String comment, String createdBy) {
-        return null;
+        Review review = new Review();
+        review.resourceId = resourceId;
+        review.userId = userId;
+        review.rating = rating;
+        review.comment = comment;
+        review.createdBy = createdBy;
+
+        persist(review);
+        return review;
     }
 
     /**
@@ -211,21 +401,24 @@ public class ReviewRepository implements PanacheRepository<Review> {
     public Review createReview(Long resourceId, Long userId, Integer rating,
                               String comment, LocalDate publicationDate,
                               String createdBy) {
-        return null;
+        Review review = createReview(resourceId, userId, rating, comment, createdBy);
+        review.publicationDate = publicationDate;
+        persist(review);
+        return review;
     }
 
     /**
      * READ: Find all active (non-archived) reviews.
      */
     public List<Review> findAllActive() {
-        return Collections.emptyList();
+        return list("archived", false);
     }
 
     /**
      * READ: Find review by ID, only if not archived.
      */
     public Review findActiveById(Long id) {
-        return null;
+        return find("id = ?1 AND archived = false", id).firstResult();
     }
 
     /**
@@ -235,7 +428,7 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Review or null if not found
      */
     public Review findByIdIncludingArchived(Long id) {
-        return null;
+        return findById(id);
     }
 
     /**
@@ -249,7 +442,13 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalArgumentException if review not found
      */
     public Review updateReview(Long id, Integer rating, String comment, String modifiedBy) {
-        return null;
+        Review review = findActiveById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found or archived: " + id);
+        }
+
+        review.update(rating, comment, modifiedBy);
+        return review;
     }
 
     /**
@@ -262,7 +461,13 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalArgumentException if review not found
      */
     public Review archiveReview(Long id, String reason, String archivedBy) {
-        return null;
+        Review review = findActiveById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found or already archived: " + id);
+        }
+
+        review.archive(reason, archivedBy);
+        return review;
     }
 
     /**
@@ -274,7 +479,16 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalArgumentException if review not found
      */
     public Review restoreReview(Long id, String restoredBy) {
-        return null;
+        Review review = findById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found: " + id);
+        }
+        if (Boolean.FALSE.equals(review.archived)) {
+            throw new IllegalStateException("Review is not archived: " + id);
+        }
+
+        review.restore(restoredBy);
+        return review;
     }
 
     /**
@@ -287,7 +501,12 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalStateException if review not archived first
      */
     public void permanentlyDeleteReview(Long id) {
-        //TODO
+        Review review = findById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found: " + id);
+        }
+
+        review.permanentlyDelete();
     }
 
     /**
@@ -297,7 +516,7 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return True if exists and not archived
      */
     public boolean existsById(Long id) {
-        return false;
+        return count("id = ?1 AND archived = false", id) > 0;
     }
 
     /**
@@ -308,7 +527,7 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return True if user has reviewed the resource
      */
     public boolean existsByUserAndWork(Long userId, Long resourceId) {
-        return false;
+        return count("userId = ?1 AND resourceId = ?2 AND archived = false", userId, resourceId) > 0;
     }
 
     // ========== MODERATION OPERATIONS ==========
@@ -322,7 +541,13 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalArgumentException if review not found
      */
     public Review approveReview(Long id, String moderatorId) {
-        return null;
+        Review review = findActiveById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found or archived: " + id);
+        }
+
+        review.approve(moderatorId);
+        return review;
     }
 
     /**
@@ -335,7 +560,13 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalArgumentException if review not found
      */
     public Review rejectReview(Long id, String reason, String moderatorId) {
-        return null;
+        Review review = findActiveById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found or archived: " + id);
+        }
+
+        review.reject(reason, moderatorId);
+        return review;
     }
 
     /**
@@ -348,7 +579,13 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @throws IllegalArgumentException if review not found
      */
     public Review flagReview(Long id, String reason, String flaggedBy) {
-        return null;
+        Review review = findActiveById(id);
+        if (review == null) {
+            throw new IllegalArgumentException("Review not found or archived: " + id);
+        }
+
+        review.flag(reason, flaggedBy);
+        return review;
     }
 
     // ========== BUSINESS METHODS ==========
@@ -357,7 +594,8 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * BUSINESS METHOD: Find pending reviews awaiting moderation.
      */
     public List<Review> findPendingModeration() {
-        return Collections.emptyList();
+        return list("status = ?1 AND archived = false ORDER BY createdAt ASC",
+                   ReviewStatus.PENDING);
     }
 
     /**
@@ -369,7 +607,11 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Average rating or null if no reviews
      */
     public Double getAverageRatingForWork(Long resourceId) {
-        return null;
+        return find("SELECT AVG(r.rating) FROM Review r " +
+                   "WHERE r.resourceId = ?1 AND r.status = ?2 AND r.archived = false",
+                   resourceId, ReviewStatus.APPROVED)
+            .project(Double.class)
+            .firstResult();
     }
 
     /**
@@ -379,7 +621,26 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Map of rating (1-5) to count
      */
     public Map<Integer, Long> getRatingDistribution(Long resourceId) {
-        return Collections.emptyMap();
+        List<Object[]> results = em.createQuery(
+            "SELECT r.rating, COUNT(r) FROM Review r " +
+            "WHERE r.resourceId = ?1 AND r.status = ?2 AND r.archived = false " +
+            "GROUP BY r.rating ORDER BY r.rating",
+            Object[].class)
+            .setParameter(1, resourceId)
+            .setParameter(2, ReviewStatus.APPROVED)
+            .getResultList();
+
+        Map<Integer, Long> distribution = new HashMap<>();
+        // Initialize all ratings to 0
+        for (int i = 1; i <= 5; i++) {
+            distribution.put(i, 0L);
+        }
+        // Fill in actual counts
+        for (Object[] row : results) {
+            distribution.put((Integer) row[0], (Long) row[1]);
+        }
+
+        return distribution;
     }
 
     // ========== BULK OPERATIONS ==========
@@ -392,7 +653,12 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Number of reviews approved
      */
     public int approveMultiple(List<Long> reviewIds, String moderatorId) {
-        return 0;
+        LocalDateTime now = LocalDateTime.now();
+        return update(
+            "status = ?1, moderatedBy = ?2, moderatedAt = ?3, modifiedBy = ?2 " +
+            "WHERE id IN ?4 AND archived = false",
+            ReviewStatus.APPROVED, moderatorId, now, reviewIds
+        );
     }
 
     /**
@@ -404,7 +670,12 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Number of reviews rejected
      */
     public int rejectMultiple(List<Long> reviewIds, String reason, String moderatorId) {
-        return 0;
+        LocalDateTime now = LocalDateTime.now();
+        return update(
+            "status = ?1, moderationReason = ?2, moderatedBy = ?3, " +
+            "moderatedAt = ?4, modifiedBy = ?3 WHERE id IN ?5 AND archived = false",
+            ReviewStatus.REJECTED, reason, moderatorId, now, reviewIds
+        );
     }
 
     /**
@@ -416,7 +687,11 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Number of reviews archived
      */
     public int archiveMultiple(List<Long> reviewIds, String reason, String archivedBy) {
-        return 0;
+        return update(
+            "archived = true, archiveReason = ?1, modifiedBy = ?2 " +
+            "WHERE id IN ?3 AND archived = false",
+            reason, archivedBy, reviewIds
+        );
     }
 
     // ========== STATISTICS ==========
@@ -428,7 +703,19 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Map of month to review count
      */
     public Map<Integer, Long> getReviewStatsByMonth(int year) {
-        return Collections.emptyMap();
+        List<Object[]> results = em.createQuery(
+            "SELECT MONTH(r.createdAt), COUNT(r) FROM Review r " +
+            "WHERE YEAR(r.createdAt) = ?1 AND r.archived = false " +
+            "GROUP BY MONTH(r.createdAt) ORDER BY MONTH(r.createdAt)",
+            Object[].class)
+            .setParameter(1, year)
+            .getResultList();
+
+        Map<Integer, Long> stats = new HashMap<>();
+        for (Object[] row : results) {
+            stats.put((Integer) row[0], (Long) row[1]);
+        }
+        return stats;
     }
 
     /**
@@ -437,7 +724,18 @@ public class ReviewRepository implements PanacheRepository<Review> {
      * @return Map of status to count
      */
     public Map<ReviewStatus, Long> getCountByStatus() {
-        return Collections.emptyMap();
+        List<Object[]> results = em.createQuery(
+            "SELECT r.status, COUNT(r) FROM Review r " +
+            "WHERE r.archived = false " +
+            "GROUP BY r.status ORDER BY r.status",
+            Object[].class)
+            .getResultList();
+
+        Map<ReviewStatus, Long> counts = new HashMap<>();
+        for (Object[] row : results) {
+            counts.put((ReviewStatus) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 
     /**

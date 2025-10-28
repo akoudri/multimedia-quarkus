@@ -12,7 +12,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,9 +35,22 @@ import java.util.List;
  * 2. Movie review: id=2, resourceId=2, userId=3, rating=4, comment="Mind-bending plot with excellent cinematography.",
  *    status=PENDING, publicationDate=2024-03-20
  */
+@Entity
+@Table(name = "reviews", indexes = {
+    @Index(name = "idx_review_resource", columnList = "resource_id"),
+    @Index(name = "idx_review_user", columnList = "user_id"),
+    @Index(name = "idx_review_rating", columnList = "rating"),
+    @Index(name = "idx_review_status", columnList = "status"),
+    @Index(name = "idx_review_archived", columnList = "archived"),
+    @Index(name = "idx_review_publication_date", columnList = "publication_date")
+})
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Review extends PanacheEntityBase {
 
     // ========== PRIMARY KEY ==========
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
     // ========== BUSINESS FIELDS ==========
@@ -47,28 +59,41 @@ public class Review extends PanacheEntityBase {
      * ID of the resource being reviewed (references Catalog service).
      * Renamed from resourceId to resourceId for consistency with documentation.
      */
+    @NotNull(message = "Work ID is required")
+    @Column(name = "resource_id", nullable = false)
     public Long resourceId;
 
     /**
      * ID of the user who wrote the review (references Users service).
      */
+    @NotNull(message = "User ID is required")
+    @Column(name = "user_id", nullable = false)
     public Long userId;
 
     /**
      * Rating from 1 to 5 stars.
      */
+    @NotNull(message = "Rating is required")
+    @Min(value = 1, message = "Rating must be at least 1")
+    @Max(value = 5, message = "Rating must be at most 5")
+    @Column(nullable = false)
     public Integer rating;
 
     /**
      * Review comment/text.
      * Required field with reasonable length constraints.
      */
+    @NotBlank(message = "Comment is required")
+    @Size(min = 10, max = 2000, message = "Comment must be between 10 and 2000 characters")
+    @Column(nullable = false, length = 2000, columnDefinition = "TEXT")
     public String comment;
 
     /**
      * Date when the review was published.
      * Defaults to current date on creation.
      */
+    @NotNull(message = "Publication date is required")
+    @Column(name = "publication_date", nullable = false)
     public LocalDate publicationDate;
 
     // ========== STATUS & LIFECYCLE FIELDS ==========
@@ -80,17 +105,23 @@ public class Review extends PanacheEntityBase {
      * - REJECTED: Rejected by moderator
      * - FLAGGED: Flagged for review (spam, inappropriate content, etc.)
      */
+    @NotNull(message = "Status is required")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     public ReviewStatus status;
 
     /**
      * Soft delete flag.
      * When true, review is hidden from normal queries but retained in database.
      */
+    @Column(nullable = false)
     public Boolean archived = false;
 
     /**
      * Reason for archiving (if archived).
      */
+    @Size(max = 500, message = "Archive reason must not exceed 500 characters")
+    @Column(name = "archive_reason", length = 500)
     public String archiveReason;
 
     // ========== MODERATION FIELDS ==========
@@ -98,16 +129,21 @@ public class Review extends PanacheEntityBase {
     /**
      * User (moderator) who approved/rejected/flagged this review.
      */
+    @Size(max = 100, message = "Moderated by must not exceed 100 characters")
+    @Column(name = "moderated_by", length = 100)
     public String moderatedBy;
 
     /**
      * Timestamp when moderation action was taken.
      */
+    @Column(name = "moderated_at")
     public LocalDateTime moderatedAt;
 
     /**
      * Reason for moderation decision (especially for rejection/flagging).
      */
+    @Size(max = 500, message = "Moderation reason must not exceed 500 characters")
+    @Column(name = "moderation_reason", length = 500)
     public String moderationReason;
 
     // ========== AUDIT/TIMESTAMP FIELDS ==========
@@ -116,23 +152,31 @@ public class Review extends PanacheEntityBase {
      * Automatic creation timestamp.
      * Set once when entity is first persisted, never updated.
      */
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     public LocalDateTime createdAt;
 
     /**
      * Automatic update timestamp.
      * Updated every time entity is modified.
      */
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     public LocalDateTime updatedAt;
 
     /**
      * User who created this review (for audit trail).
      * Typically same as userId, but tracked separately for audit.
      */
+    @Size(max = 100, message = "Created by must not exceed 100 characters")
+    @Column(name = "created_by", length = 100)
     public String createdBy;
 
     /**
      * User who last modified this review (for audit trail).
      */
+    @Size(max = 100, message = "Modified by must not exceed 100 characters")
+    @Column(name = "modified_by", length = 100)
     public String modifiedBy;
 
     // ========== JPA LIFECYCLE CALLBACKS ==========
@@ -141,6 +185,7 @@ public class Review extends PanacheEntityBase {
      * Called automatically before entity is persisted for the first time.
      * Initializes default values for status, archived flag, and publication date.
      */
+    @PrePersist
     protected void onCreate() {
         // Set default status if not explicitly set
         if (status == null) {
@@ -164,6 +209,7 @@ public class Review extends PanacheEntityBase {
      * Called automatically before entity is updated.
      * Validates business rules before save.
      */
+    @PreUpdate
     protected void onUpdate() {
         // Business rule: Cannot modify archived reviews without specifying modifier
         if (Boolean.TRUE.equals(archived) && modifiedBy == null) {
@@ -181,7 +227,7 @@ public class Review extends PanacheEntityBase {
      * @return List of reviews for the resource, ordered by publication date descending
      */
     public static List<Review> findByWorkId(Long resourceId) {
-        return Collections.emptyList();
+        return list("resourceId = ?1 AND archived = false ORDER BY publicationDate DESC", resourceId);
     }
 
     /**
@@ -192,7 +238,7 @@ public class Review extends PanacheEntityBase {
      * @return List of reviews by the user, ordered by publication date descending
      */
     public static List<Review> findByUserId(Long userId) {
-        return Collections.emptyList();
+        return list("userId = ?1 AND archived = false ORDER BY publicationDate DESC", userId);
     }
 
     /**
@@ -202,7 +248,8 @@ public class Review extends PanacheEntityBase {
      * @return List of approved reviews
      */
     public static List<Review> findApprovedByWorkId(Long resourceId) {
-        return Collections.emptyList();
+        return list("resourceId = ?1 AND status = ?2 AND archived = false ORDER BY publicationDate DESC",
+                   resourceId, ReviewStatus.APPROVED);
     }
 
     /**
@@ -214,7 +261,8 @@ public class Review extends PanacheEntityBase {
      * @return List of pending reviews
      */
     public static List<Review> findPendingReviews() {
-        return Collections.emptyList();
+        return list("status = ?1 AND archived = false ORDER BY createdAt ASC",
+                   ReviewStatus.PENDING);
     }
 
     /**
@@ -226,7 +274,8 @@ public class Review extends PanacheEntityBase {
      * @return List of flagged reviews
      */
     public static List<Review> findFlaggedReviews() {
-        return Collections.emptyList();
+        return list("status = ?1 AND archived = false ORDER BY moderatedAt DESC",
+                   ReviewStatus.FLAGGED);
     }
 
     /**
@@ -239,7 +288,9 @@ public class Review extends PanacheEntityBase {
      * @return List of recent reviews
      */
     public static List<Review> findRecentReviews(int days) {
-        return Collections.emptyList();
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(days);
+        return list("createdAt >= ?1 AND archived = false ORDER BY createdAt DESC",
+                   cutoffDate);
     }
 
     /**
@@ -250,7 +301,7 @@ public class Review extends PanacheEntityBase {
      * @return List of reviews with that rating
      */
     public static List<Review> findByRating(Integer rating) {
-        return Collections.emptyList();
+        return list("rating = ?1 AND archived = false ORDER BY publicationDate DESC", rating);
     }
 
     /**
@@ -261,7 +312,8 @@ public class Review extends PanacheEntityBase {
      * @return List of reviews meeting criteria
      */
     public static List<Review> findByWorkIdAndMinRating(Long resourceId, Integer minRating) {
-        return Collections.emptyList();
+        return list("resourceId = ?1 AND rating >= ?2 AND archived = false ORDER BY publicationDate DESC",
+                   resourceId, minRating);
     }
 
     /**
@@ -272,7 +324,11 @@ public class Review extends PanacheEntityBase {
      * @return Average rating or null if no reviews
      */
     public static Double getAverageRatingForWork(Long resourceId) {
-        return null;
+        return find("SELECT AVG(r.rating) FROM Review r WHERE r.resourceId = ?1 " +
+                   "AND r.status = ?2 AND r.archived = false",
+                   resourceId, ReviewStatus.APPROVED)
+                .project(Double.class)
+                .firstResult();
     }
 
     /**
@@ -283,7 +339,8 @@ public class Review extends PanacheEntityBase {
      * @return Count of reviews
      */
     public static long countReviewsForWork(Long resourceId) {
-        return 0L;
+        return count("resourceId = ?1 AND status = ?2 AND archived = false",
+                    resourceId, ReviewStatus.APPROVED);
     }
 
     /**
@@ -294,7 +351,7 @@ public class Review extends PanacheEntityBase {
      * @return Count of reviews
      */
     public static long countReviewsByUser(Long userId) {
-        return 0L;
+        return count("userId = ?1 AND archived = false", userId);
     }
 
     /**
@@ -306,7 +363,7 @@ public class Review extends PanacheEntityBase {
      * @return True if user has reviewed the resource
      */
     public static boolean userHasReviewedWork(Long userId, Long resourceId) {
-        return false;
+        return count("userId = ?1 AND resourceId = ?2 AND archived = false", userId, resourceId) > 0;
     }
 
     // ========== PAGINATION EXAMPLES (Active Record Pattern) ==========
@@ -319,7 +376,10 @@ public class Review extends PanacheEntityBase {
      * @return List of reviews for the requested page
      */
     public static List<Review> findAllPaginated(int pageIndex, int pageSize) {
-        return Collections.emptyList();
+        return find("archived = false",
+                   Sort.by("createdAt").descending())
+            .page(Page.of(pageIndex, pageSize))
+            .list();
     }
 
     /**
@@ -331,7 +391,11 @@ public class Review extends PanacheEntityBase {
      * @return Paginated reviews for the resource
      */
     public static List<Review> findByWorkIdPaginated(Long resourceId, int pageIndex, int pageSize) {
-        return Collections.emptyList();
+        return find("resourceId = ?1 AND status = ?2 AND archived = false",
+                   Sort.by("publicationDate").descending(),
+                   resourceId, ReviewStatus.APPROVED)
+            .page(Page.of(pageIndex, pageSize))
+            .list();
     }
 
     /**
@@ -343,7 +407,11 @@ public class Review extends PanacheEntityBase {
      * @return Paginated reviews by the user
      */
     public static List<Review> findByUserIdPaginated(Long userId, int pageIndex, int pageSize) {
-        return Collections.emptyList();
+        return find("userId = ?1 AND archived = false",
+                   Sort.by("createdAt").descending(),
+                   userId)
+            .page(Page.of(pageIndex, pageSize))
+            .list();
     }
 
     /**
@@ -353,7 +421,9 @@ public class Review extends PanacheEntityBase {
      * @return Total number of pages
      */
     public static int getTotalPages(int pageSize) {
-        return 0;
+        return find("status = ?1 AND archived = false", ReviewStatus.APPROVED)
+            .page(Page.ofSize(pageSize))
+            .pageCount();
     }
 
     // ========== INSTANCE METHODS FOR LIFECYCLE MANAGEMENT ==========
@@ -375,7 +445,16 @@ public class Review extends PanacheEntityBase {
      */
     public static Review create(Long resourceId, Long userId, Integer rating,
                                String comment, String createdBy) {
-        return null;
+        Review review = new Review();
+        review.resourceId = resourceId;
+        review.userId = userId;
+        review.rating = rating;
+        review.comment = comment;
+        review.createdBy = createdBy;
+        // status, archived, and publicationDate will be set by @PrePersist
+
+        review.persist();
+        return review;
     }
 
     /**
@@ -394,7 +473,10 @@ public class Review extends PanacheEntityBase {
     public static Review create(Long resourceId, Long userId, Integer rating,
                                String comment, LocalDate publicationDate,
                                String createdBy) {
-        return null;
+        Review review = create(resourceId, userId, rating, comment, createdBy);
+        review.publicationDate = publicationDate;
+        review.persist();
+        return review;
     }
 
     // ========== UPDATE ==========
@@ -410,7 +492,24 @@ public class Review extends PanacheEntityBase {
      * @param modifiedBy User making the update (typically the review author)
      */
     public void update(Integer rating, String comment, String modifiedBy) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot update archived review. Restore it first.");
+        }
+
+        this.rating = rating;
+        this.comment = comment;
+        this.modifiedBy = modifiedBy;
+
+        // Reset to pending for re-moderation (unless rejected)
+        if (this.status == ReviewStatus.APPROVED || this.status == ReviewStatus.FLAGGED) {
+            this.status = ReviewStatus.PENDING;
+            this.moderatedBy = null;
+            this.moderatedAt = null;
+            this.moderationReason = null;
+        }
+
+        // updatedAt will be set automatically by @UpdateTimestamp
+        this.persist();
     }
 
     /**
@@ -420,7 +519,16 @@ public class Review extends PanacheEntityBase {
      * @param modifiedBy User making the change
      */
     public void updateRating(Integer newRating, String modifiedBy) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot update archived review");
+        }
+        this.rating = newRating;
+        this.modifiedBy = modifiedBy;
+        // Reset moderation status
+        if (this.status == ReviewStatus.APPROVED) {
+            this.status = ReviewStatus.PENDING;
+        }
+        this.persist();
     }
 
     /**
@@ -430,7 +538,16 @@ public class Review extends PanacheEntityBase {
      * @param modifiedBy User making the change
      */
     public void updateComment(String newComment, String modifiedBy) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot update archived review");
+        }
+        this.comment = newComment;
+        this.modifiedBy = modifiedBy;
+        // Reset moderation status
+        if (this.status == ReviewStatus.APPROVED) {
+            this.status = ReviewStatus.PENDING;
+        }
+        this.persist();
     }
 
     // ========== MODERATION ==========
@@ -443,7 +560,15 @@ public class Review extends PanacheEntityBase {
      * @param moderatorId Moderator performing the approval
      */
     public void approve(String moderatorId) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot approve archived review");
+        }
+        this.status = ReviewStatus.APPROVED;
+        this.moderatedBy = moderatorId;
+        this.moderatedAt = LocalDateTime.now();
+        this.modifiedBy = moderatorId;
+        this.moderationReason = null; // Clear any previous reason
+        this.persist();
     }
 
     /**
@@ -455,7 +580,15 @@ public class Review extends PanacheEntityBase {
      * @param moderatorId Moderator performing the rejection
      */
     public void reject(String reason, String moderatorId) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot reject archived review");
+        }
+        this.status = ReviewStatus.REJECTED;
+        this.moderationReason = reason;
+        this.moderatedBy = moderatorId;
+        this.moderatedAt = LocalDateTime.now();
+        this.modifiedBy = moderatorId;
+        this.persist();
     }
 
     /**
@@ -468,7 +601,15 @@ public class Review extends PanacheEntityBase {
      * @param flaggedBy User or moderator flagging the review
      */
     public void flag(String reason, String flaggedBy) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot flag archived review");
+        }
+        this.status = ReviewStatus.FLAGGED;
+        this.moderationReason = reason;
+        this.moderatedBy = flaggedBy;
+        this.moderatedAt = LocalDateTime.now();
+        this.modifiedBy = flaggedBy;
+        this.persist();
     }
 
     /**
@@ -479,7 +620,15 @@ public class Review extends PanacheEntityBase {
      * @param moderatorId Moderator resetting the status
      */
     public void resetToPending(String moderatorId) {
-        //TODO
+        if (Boolean.TRUE.equals(archived)) {
+            throw new IllegalStateException("Cannot reset archived review");
+        }
+        this.status = ReviewStatus.PENDING;
+        this.moderationReason = null;
+        this.moderatedBy = moderatorId;
+        this.moderatedAt = LocalDateTime.now();
+        this.modifiedBy = moderatorId;
+        this.persist();
     }
 
     // ========== SOFT DELETE / ARCHIVE ==========
@@ -494,7 +643,10 @@ public class Review extends PanacheEntityBase {
      * @param archivedBy User performing the archive
      */
     public void archive(String reason, String archivedBy) {
-        //TODO
+        this.archived = true;
+        this.archiveReason = reason;
+        this.modifiedBy = archivedBy;
+        this.persist();
     }
 
     /**
@@ -506,7 +658,12 @@ public class Review extends PanacheEntityBase {
      * @param restoredBy User performing the restoration
      */
     public void restore(String restoredBy) {
-        //TODO
+        this.archived = false;
+        this.archiveReason = null;
+        this.modifiedBy = restoredBy;
+        // Restored reviews go back to pending status
+        this.status = ReviewStatus.PENDING;
+        this.persist();
     }
 
     // ========== HARD DELETE ==========
@@ -525,7 +682,11 @@ public class Review extends PanacheEntityBase {
      * @throws IllegalStateException if review is not archived first
      */
     public void permanentlyDelete() {
-        //TODO
+        if (Boolean.FALSE.equals(archived)) {
+            throw new IllegalStateException(
+                "Cannot permanently delete a non-archived review. Archive it first for safety.");
+        }
+        this.delete();
     }
 
     /**
@@ -537,7 +698,9 @@ public class Review extends PanacheEntityBase {
      * @param confirmedBy Administrator confirming the deletion
      */
     public void forceDelete(String confirmedBy) {
-        //TODO
+        // Log or audit this dangerous operation
+        this.modifiedBy = confirmedBy;
+        this.delete();
     }
 
     // ========== UTILITY METHODS ==========
