@@ -3,6 +3,9 @@ plugins {
 }
 
 dependencies {
+    // Shared configuration module
+    implementation project(':shared-config')
+
     // Reactive database support
     implementation 'io.quarkus:quarkus-hibernate-reactive-panache'
     implementation 'io.quarkus:quarkus-reactive-pg-client'
@@ -16,6 +19,15 @@ dependencies {
     implementation 'io.quarkus:quarkus-rest-jackson'
     implementation 'io.quarkus:quarkus-hibernate-validator'
     implementation 'io.quarkus:quarkus-smallrye-openapi'
+
+    // Test dependencies
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.quarkus:quarkus-junit5-mockito'
+    testImplementation 'io.quarkus:quarkus-test-vertx'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation 'org.assertj:assertj-core:3.24.2'
 }
 
 compileJava {

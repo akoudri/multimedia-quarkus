@@ -5,14 +5,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ConstraintViolationExceptionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/DuplicateReviewExceptionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ReviewBusinessExceptionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ReviewNotFoundExceptionMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ReviewValidationExceptionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/data/Review.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/data/ReviewRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/data/ReviewStatus.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/dto/CreateReviewRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/dto/ReviewResponse.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/dto/UpdateReviewRequest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/errors/DuplicateReviewException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/errors/ReviewBusinessException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/errors/ReviewException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/errors/ReviewNotFoundException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/errors/ReviewValidationException.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/resources/ReviewResource.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/services/ReviewService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/MutinyPatternsTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/data/ReviewRepositoryTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/resources/ReviewResourceIT.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/services/ReviewServiceTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/controllers/HelloCtrl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/resources/templates/hello.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/shared-config/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/shared-config/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/shared-config/src/main/resources/application.properties" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reviews/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/reviews/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/resources/ReviewResource.java" beforeDir="false" afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/resources/ReviewResource.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reactive-reviews/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/reactive-reviews/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reactive-reviews/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/reactive-reviews/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/GreetingResourceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/reactive-reviews/src/test/java/com/akfc/GreetingResourceTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,6 +69,7 @@
         <option value="Interface" />
         <option value="AnnotationType" />
         <option value="Class" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -78,6 +98,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
     "Gradle.Download Sources.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -87,10 +108,18 @@
     "SHELLCHECK.PATH": "/home/ali/.local/share/JetBrains/IdeaIC2025.2/Shell Script/shellcheck",
     "git-widget-placeholder": "exercices",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/ali/Training/quarkus-training/multimedia-quarkus",
+    "last_opened_file_path": "/home/ali/Training/quarkus-training/multimedia-quarkus/reactive-reviews/src/main/java/com/akfc/reviews/data",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/reactive-reviews/src/main/java/com/akfc/reviews/data" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.akfc.reviews.services" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="multimedia-library" />
