@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ConstraintViolationExceptionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/DuplicateReviewExceptionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ReviewBusinessExceptionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ReviewNotFoundExceptionMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/mappers/ReviewValidationExceptionMapper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/services/ReviewService.java" beforeDir="false" afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/services/ReviewService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reviews/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/reviews/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/resources/ReviewResource.java" beforeDir="false" afterPath="$PROJECT_DIR$/reviews/src/main/java/com/akfc/reviews/web/resources/ReviewResource.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,20 +76,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;SHELLCHECK.PATH&quot;: &quot;/home/ali/.local/share/JetBrains/IdeaIC2025.2/Shell Script/shellcheck&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;exercices&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/ali/Training/quarkus-training/multimedia-quarkus&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Gradle.Download Sources.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "SHELLCHECK.PATH": "/home/ali/.local/share/JetBrains/IdeaIC2025.2/Shell Script/shellcheck",
+    "git-widget-placeholder": "exercices",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/ali/Training/quarkus-training/multimedia-quarkus",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="multimedia-library" />

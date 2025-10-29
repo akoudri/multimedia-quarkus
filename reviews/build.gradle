@@ -22,6 +22,9 @@ dependencies {
     // REST and Error Handling
     implementation 'io.quarkus:quarkus-rest-jackson'
 
+    // Qute Template Engine for Web UI
+    implementation 'io.quarkus:quarkus-rest-qute'
+
     // OpenAPI/Swagger Documentation
     implementation 'io.quarkus:quarkus-smallrye-openapi'
 
