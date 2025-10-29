@@ -15,7 +15,6 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,8 +48,28 @@ public class ReviewService {
      * @throws DuplicateReviewException if user already reviewed this resource
      * @throws ReviewValidationException if validation fails
      */
-    public ReviewResponse createReview(CreateReviewRequest request, String createdBy) {
-        return null;
+    @Transactional
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
+    public ReviewResponse createReview(@Valid CreateReviewRequest request, String createdBy) {
+        // Validate request
+        validateCreateRequest(request);
+
+        // Check if user has already reviewed this resource
+        if (reviewRepository.existsByUserAndWork(request.userId, request.resourceId)) {
+            throw new DuplicateReviewException(request.userId, request.resourceId);
+        }
+
+        // Create review using repository
+        Review review = reviewRepository.createReview(
+            request.resourceId,
+            request.userId,
+            request.rating,
+            request.comment,
+            createdBy
+        );
+
+        return ReviewResponse.from(review);
     }
 
     // ========== READ ==========
@@ -62,8 +81,13 @@ public class ReviewService {
      * @return Review response
      * @throws ReviewNotFoundException if review not found
      */
+    @CacheResult(cacheName = "review-by-id")
     public ReviewResponse getReviewById(Long id) {
-        return null;
+        Review review = reviewRepository.findActiveById(id);
+        if (review == null) {
+            throw new ReviewNotFoundException(id);
+        }
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -74,8 +98,12 @@ public class ReviewService {
      * @param resourceId Work ID
      * @return List of approved reviews
      */
+    @CacheResult(cacheName = "approved-reviews-by-resource")
     public List<ReviewResponse> getApprovedReviewsForWork(Long resourceId) {
-        return Collections.emptyList();
+        return Review.findApprovedByWorkId(resourceId)
+            .stream()
+            .map(ReviewResponse::from)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -84,8 +112,12 @@ public class ReviewService {
      * @param userId User ID
      * @return List of user's reviews
      */
+    @CacheResult(cacheName = "reviews-by-user")
     public List<ReviewResponse> getReviewsByUser(Long userId) {
-        return Collections.emptyList();
+        return Review.findByUserId(userId)
+            .stream()
+            .map(ReviewResponse::from)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -93,8 +125,12 @@ public class ReviewService {
      *
      * @return List of reviews awaiting moderation
      */
+    @CacheResult(cacheName = "pending-reviews")
     public List<ReviewResponse> getPendingReviews() {
-        return Collections.emptyList();
+        return reviewRepository.findPendingModeration()
+            .stream()
+            .map(ReviewResponse::from)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -102,8 +138,12 @@ public class ReviewService {
      *
      * @return List of flagged reviews
      */
+    @CacheResult(cacheName = "flagged-reviews")
     public List<ReviewResponse> getFlaggedReviews() {
-        return Collections.emptyList();
+        return Review.findFlaggedReviews()
+            .stream()
+            .map(ReviewResponse::from)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -114,8 +154,9 @@ public class ReviewService {
      * @param resourceId Work ID
      * @return Average rating or null if no reviews
      */
+    @CacheResult(cacheName = "average-rating-by-resource")
     public Double getAverageRating(Long resourceId) {
-        return null;
+        return reviewRepository.getAverageRatingForWork(resourceId);
     }
 
     /**
@@ -126,8 +167,9 @@ public class ReviewService {
      * @param resourceId Work ID
      * @return Rating distribution
      */
+    @CacheResult(cacheName = "rating-distribution-by-resource")
     public Map<Integer, Long> getRatingDistribution(Long resourceId) {
-        return Collections.emptyMap();
+        return reviewRepository.getRatingDistribution(resourceId);
     }
 
     // ========== UPDATE ==========
@@ -147,8 +189,31 @@ public class ReviewService {
      * @throws ReviewNotFoundException if review not found
      * @throws ReviewBusinessException if business rules violated
      */
-    public ReviewResponse updateReview(Long id, UpdateReviewRequest request, String modifiedBy) {
-        return null;
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "approved-reviews-by-resource")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
+    @CacheInvalidateAll(cacheName = "average-rating-by-resource")
+    @CacheInvalidateAll(cacheName = "rating-distribution-by-resource")
+    public ReviewResponse updateReview(Long id, @Valid UpdateReviewRequest request, String modifiedBy) {
+        Review review = getReviewEntity(id);
+
+        // Validate request
+        validateUpdateRequest(request);
+
+        // Business rule: Cannot update rejected reviews
+        if (review.status == ReviewStatus.REJECTED) {
+            throw new ReviewBusinessException(
+                "Cannot update rejected review",
+                "REVIEW_REJECTED"
+            );
+        }
+
+        // Update review (this will reset status to PENDING if it was APPROVED)
+        review.update(request.rating, request.comment, modifiedBy);
+
+        return ReviewResponse.from(review);
     }
 
     // ========== MODERATION ==========
@@ -162,8 +227,25 @@ public class ReviewService {
      * @param moderatorId Moderator performing the approval
      * @return Approved review response
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "approved-reviews-by-resource")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
+    @CacheInvalidateAll(cacheName = "average-rating-by-resource")
+    @CacheInvalidateAll(cacheName = "rating-distribution-by-resource")
     public ReviewResponse approveReview(Long id, String moderatorId) {
-        return null;
+        Review review = getReviewEntity(id);
+
+        if (review.status == ReviewStatus.APPROVED) {
+            throw new ReviewBusinessException(
+                "Review is already approved",
+                "ALREADY_APPROVED"
+            );
+        }
+
+        review.approve(moderatorId);
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -176,8 +258,26 @@ public class ReviewService {
      * @param moderatorId Moderator performing the rejection
      * @return Rejected review response
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
     public ReviewResponse rejectReview(Long id, String reason, String moderatorId) {
-        return null;
+        Review review = getReviewEntity(id);
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ReviewValidationException("reason", "Rejection reason is required");
+        }
+
+        if (review.status == ReviewStatus.REJECTED) {
+            throw new ReviewBusinessException(
+                "Review is already rejected",
+                "ALREADY_REJECTED"
+            );
+        }
+
+        review.reject(reason, moderatorId);
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -190,8 +290,34 @@ public class ReviewService {
      * @param flaggedBy User or moderator flagging the review
      * @return Flagged review response
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "approved-reviews-by-resource")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "flagged-reviews")
     public ReviewResponse flagReview(Long id, String reason, String flaggedBy) {
-        return null;
+        Review review = getReviewEntity(id);
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ReviewValidationException("reason", "Flag reason is required");
+        }
+
+        if (review.status == ReviewStatus.FLAGGED) {
+            throw new ReviewBusinessException(
+                "Review is already flagged",
+                "ALREADY_FLAGGED"
+            );
+        }
+
+        if (review.status == ReviewStatus.REJECTED) {
+            throw new ReviewBusinessException(
+                "Cannot flag rejected review",
+                "REVIEW_REJECTED"
+            );
+        }
+
+        review.flag(reason, flaggedBy);
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -203,8 +329,24 @@ public class ReviewService {
      * @param moderatorId Moderator resetting the status
      * @return Updated review response
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "approved-reviews-by-resource")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
+    @CacheInvalidateAll(cacheName = "flagged-reviews")
     public ReviewResponse resetToPending(Long id, String moderatorId) {
-        return null;
+        Review review = getReviewEntity(id);
+
+        if (review.status == ReviewStatus.PENDING) {
+            throw new ReviewBusinessException(
+                "Review is already pending",
+                "ALREADY_PENDING"
+            );
+        }
+
+        review.resetToPending(moderatorId);
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -214,8 +356,19 @@ public class ReviewService {
      * @param moderatorId Moderator performing the approvals
      * @return Number of reviews approved
      */
+    @Transactional
+    @CacheInvalidateAll(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "approved-reviews-by-resource")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
+    @CacheInvalidateAll(cacheName = "average-rating-by-resource")
+    @CacheInvalidateAll(cacheName = "rating-distribution-by-resource")
     public int bulkApproveReviews(List<Long> reviewIds, String moderatorId) {
-        return 0;
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            throw new ReviewValidationException("reviewIds", "Review IDs list cannot be empty");
+        }
+
+        return reviewRepository.approveMultiple(reviewIds, moderatorId);
     }
 
     /**
@@ -226,8 +379,20 @@ public class ReviewService {
      * @param moderatorId Moderator performing the rejections
      * @return Number of reviews rejected
      */
+    @Transactional
+    @CacheInvalidateAll(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
     public int bulkRejectReviews(List<Long> reviewIds, String reason, String moderatorId) {
-        return 0;
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            throw new ReviewValidationException("reviewIds", "Review IDs list cannot be empty");
+        }
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ReviewValidationException("reason", "Rejection reason is required");
+        }
+
+        return reviewRepository.rejectMultiple(reviewIds, reason, moderatorId);
     }
 
     // ========== DELETE ==========
@@ -240,8 +405,23 @@ public class ReviewService {
      * @param archivedBy User archiving the review
      * @return Archived review response
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "approved-reviews-by-resource")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
+    @CacheInvalidateAll(cacheName = "flagged-reviews")
+    @CacheInvalidateAll(cacheName = "average-rating-by-resource")
+    @CacheInvalidateAll(cacheName = "rating-distribution-by-resource")
     public ReviewResponse archiveReview(Long id, String reason, String archivedBy) {
-        return null;
+        Review review = getReviewEntity(id);
+
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new ReviewValidationException("reason", "Archive reason is required");
+        }
+
+        review.archive(reason, archivedBy);
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -253,8 +433,25 @@ public class ReviewService {
      * @param restoredBy User restoring the review
      * @return Restored review response
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
+    @CacheInvalidateAll(cacheName = "reviews-by-user")
+    @CacheInvalidateAll(cacheName = "pending-reviews")
     public ReviewResponse restoreReview(Long id, String restoredBy) {
-        return null;
+        Review review = reviewRepository.findByIdIncludingArchived(id);
+        if (review == null) {
+            throw new ReviewNotFoundException(id);
+        }
+
+        if (Boolean.FALSE.equals(review.archived)) {
+            throw new ReviewBusinessException(
+                "Review is not archived: " + id,
+                "REVIEW_NOT_ARCHIVED"
+            );
+        }
+
+        review.restore(restoredBy);
+        return ReviewResponse.from(review);
     }
 
     /**
@@ -266,8 +463,22 @@ public class ReviewService {
      * @throws ReviewNotFoundException if review not found
      * @throws ReviewBusinessException if review not archived
      */
+    @Transactional
+    @CacheInvalidate(cacheName = "review-by-id")
     public void deleteReview(Long id) {
-        //TODO
+        Review review = reviewRepository.findByIdIncludingArchived(id);
+        if (review == null) {
+            throw new ReviewNotFoundException(id);
+        }
+
+        if (Boolean.FALSE.equals(review.archived)) {
+            throw new ReviewBusinessException(
+                "Cannot permanently delete non-archived review. Archive it first.",
+                "REVIEW_NOT_ARCHIVED"
+            );
+        }
+
+        review.permanentlyDelete();
     }
 
     // ========== HELPER METHODS ==========
