@@ -69,7 +69,7 @@ public class ResourceService {
             createdBy
         );
 
-        // Publish resource created event to RabbitMQ
+        // Publish resource created event to Kafka
         eventPublisher.publishResourceCreated(resource);
 
         return ResourceResponse.from(resource);

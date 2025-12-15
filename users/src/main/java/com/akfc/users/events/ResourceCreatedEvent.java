@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 /**
  * Event received when a new resource is created in the catalog.
  *
- * This event is consumed from RabbitMQ to notify users about new resources
+ * This event is consumed from Kafka to notify users about new resources
  * that might interest them based on their preferences.
  */
 public class ResourceCreatedEvent {

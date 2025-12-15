@@ -7,11 +7,13 @@ import jakarta.enterprise.event.Observes;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Optional;
 
 @ApplicationScoped
 public class ConsulRegistrationService {
@@ -32,6 +34,9 @@ public class ConsulRegistrationService {
 
     @ConfigProperty(name = "consul.registration.enabled", defaultValue = "true")
     boolean registrationEnabled;
+
+    @ConfigProperty(name = "consul.service.address")
+    Optional<String> configuredServiceAddress;
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
@@ -67,24 +72,48 @@ public class ConsulRegistrationService {
         }
     }
 
+    private String getServiceAddress() {
+        // Priority: 1. Config property, 2. Environment variable, 3. Auto-detect
+        if (configuredServiceAddress.isPresent()) {
+            LOG.debugf("Using configured service address: %s", configuredServiceAddress.get());
+            return configuredServiceAddress.get();
+        }
+
+        String envAddress = System.getenv("SERVICE_ADDRESS");
+        if (envAddress != null && !envAddress.isBlank()) {
+            LOG.debugf("Using SERVICE_ADDRESS environment variable: %s", envAddress);
+            return envAddress;
+        }
+
+        try {
+            String detectedAddress = InetAddress.getLocalHost().getHostAddress();
+            LOG.debugf("Auto-detected service address: %s", detectedAddress);
+            return detectedAddress;
+        } catch (Exception e) {
+            LOG.warn("Failed to auto-detect service address, falling back to localhost", e);
+            return "localhost";
+        }
+    }
+
     private void registerService() throws Exception {
         serviceId = serviceName + "-" + servicePort;
+        String serviceAddress = getServiceAddress();
 
         String registrationJson = String.format("""
             {
               "ID": "%s",
               "Name": "%s",
               "Port": %d,
-              "Address": "172.22.0.1",
+              "Address": "%s",
               "Tags": ["quarkus", "microservice"],
               "Check": {
-                "TCP": "172.22.0.1:%d",
+                "TCP": "%s:%d",
                 "Interval": "10s",
                 "Timeout": "3s",
                 "DeregisterCriticalServiceAfter": "90s"
               }
             }
-            """, serviceId, serviceName, servicePort, servicePort);
+            """, serviceId, serviceName, servicePort, serviceAddress, serviceAddress, servicePort);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(String.format("http://%s:%d/v1/agent/service/register", consulHost, consulPort)))

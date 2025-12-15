@@ -9,6 +9,7 @@ import com.akfc.catalog.dto.ResourceResponse;
 import com.akfc.catalog.dto.UpdateResourceRequest;
 import com.akfc.catalog.errors.ResourceAlreadyArchivedException;
 import com.akfc.catalog.errors.ResourceNotFoundException;
+import com.akfc.catalog.messaging.ResourceEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class ResourceServiceMockitoTest {
 
     @Mock
     private ResourceRepository resourceRepository;
+
+    @Mock
+    private ResourceEventPublisher eventPublisher;
 
     @InjectMocks
     private ResourceService resourceService;
