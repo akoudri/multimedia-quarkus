@@ -5,9 +5,6 @@ plugins {
 
 // Module-specific dependencies can be added here
 dependencies {
-    // Shared configuration module
-    implementation project(':shared-config')
-
     // Hibernate ORM with Panache for JPA
     implementation 'io.quarkus:quarkus-hibernate-orm-panache'
 
@@ -27,6 +24,10 @@ dependencies {
 
     // REST Client for external API calls
     implementation 'io.quarkus:quarkus-rest-client-jackson'
+
+    // SmallRye Stork for service discovery
+    implementation 'io.quarkus:quarkus-smallrye-stork'
+    implementation 'io.smallrye.stork:stork-service-discovery-consul'
 
     // SmallRye Fault Tolerance for resilience patterns
     implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
@@ -49,8 +50,10 @@ dependencies {
     testImplementation 'io.quarkus:quarkus-junit5-mockito'
     testImplementation 'org.mockito:mockito-core'
     testImplementation 'io.quarkus:quarkus-panache-mock'
-    testImplementation 'org.testcontainers:testcontainers:1.19.3'
-    testImplementation 'org.testcontainers:postgresql:1.19.3'
+    testImplementation 'org.testcontainers:testcontainers:1.20.4'
+    testImplementation 'org.testcontainers:postgresql:1.20.4'
+    // H2 database for tests (avoids Docker/Testcontainers dependency for @QuarkusTest)
+    testImplementation 'io.quarkus:quarkus-jdbc-h2'
     testImplementation 'org.assertj:assertj-core:3.24.2'
 
     // Playwright for E2E tests

@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
+import com.akfc.catalog.messaging.ResourceEventPublisher;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.AdditionalMatchers.gt;
@@ -43,6 +45,9 @@ class ResourceServiceMockitoTest {
 
     @Mock
     private ResourceRepository resourceRepository;
+
+    @Mock
+    private ResourceEventPublisher eventPublisher;
 
     @InjectMocks
     private ResourceService resourceService;

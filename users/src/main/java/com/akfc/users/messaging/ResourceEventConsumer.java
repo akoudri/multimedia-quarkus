@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Consumer service for resource-related events from the catalog service.
  *
- * Consumes events from RabbitMQ to notify users about new resources
+ * Consumes events from Kafka to notify users about new resources
  * that might interest them based on their preferences (subscriptions).
  */
 @ApplicationScoped
@@ -32,8 +32,7 @@ public class ResourceEventConsumer {
     /**
      * Handle resource created events.
      *
-     * This method is called automatically when a message arrives on the resource-events queue.
-     * The queue is bound to the library.resources exchange with routing keys: resource.created, resource.updated
+     * This method is called automatically when a message arrives on the library-resources Kafka topic.
      *
      * Creates notifications only for users subscribed to the resource type.
      *
@@ -104,9 +103,9 @@ public class ResourceEventConsumer {
             LOG.errorf(e, "Error processing resource created event for resource ID: %d", event.resourceId);
             // Note: Depending on error handling strategy, you might want to:
             // - Acknowledge the message (consume it even if processing failed)
-            // - Reject the message (send to dead letter queue)
+            // - Reject the message (send to dead letter topic)
             // - Retry processing (with exponential backoff)
-            throw e; // Re-throw to trigger message rejection/retry based on RabbitMQ configuration
+            throw e; // Re-throw to trigger message rejection/retry based on Kafka configuration
         }
     }
 

@@ -1,6 +1,6 @@
 allprojects {
-    group 'com.library'
-    version '1.0.0-SNAPSHOT'
+    group = 'com.library'
+    version = '1.0.0-SNAPSHOT'
 
     repositories {
         mavenCentral()
@@ -16,6 +16,15 @@ subprojects {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
+    configurations.all {
+        // Force latest docker-java version for Docker 29+ API compatibility
+        resolutionStrategy {
+            force 'com.github.docker-java:docker-java-api:3.7.0'
+            force 'com.github.docker-java:docker-java-transport:3.7.0'
+            force 'com.github.docker-java:docker-java-transport-zerodep:3.7.0'
+        }
+    }
+
     dependencies {
         implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
         implementation 'io.quarkus:quarkus-rest'
@@ -24,8 +33,8 @@ subprojects {
         // Health checks for service monitoring
         implementation 'io.quarkus:quarkus-smallrye-health'
 
-        // Messaging with RabbitMQ (includes reactive messaging)
-        implementation 'io.quarkus:quarkus-messaging-rabbitmq'
+        // Messaging with Kafka (includes reactive messaging)
+        implementation 'io.quarkus:quarkus-messaging-kafka'
 
         // Consul service registration (using REST client)
         implementation 'io.quarkus:quarkus-rest-client-jackson'
@@ -36,5 +45,8 @@ subprojects {
 
     test {
         systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+        // Force Docker API version for Docker 29+ compatibility with Testcontainers
+        environment "DOCKER_API_VERSION", "1.44"
+        environment "DOCKER_HOST", "unix:///var/run/docker.sock"
     }
 }
