@@ -52,6 +52,9 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers:1.19.3'
     testImplementation 'org.testcontainers:postgresql:1.19.3'
     testImplementation 'org.assertj:assertj-core:3.24.2'
+
+    // Playwright for E2E tests
+    testImplementation 'io.quarkiverse.playwright:quarkus-playwright:2.3.0'
 }
 
 compileJava {
