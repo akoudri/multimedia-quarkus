@@ -8,6 +8,8 @@ import com.akfc.catalog.errors.ResourceNotFoundException;
 import com.akfc.catalog.services.ResourceService;
 import io.quarkus.qute.CheckedTemplate;
 import io.quarkus.qute.TemplateInstance;
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -52,6 +54,9 @@ public class CatalogWebController {
     @Inject
     ResourceService resourceService;
 
+    @Inject
+    SecurityIdentity securityIdentity;
+
     /**
      * Type-safe Qute templates using @CheckedTemplate.
      *
@@ -74,6 +79,9 @@ public class CatalogWebController {
          * @param filterType Selected resource type filter (can be null)
          * @param message Success/info message (can be null)
          * @param error Error message (can be null)
+         * @param isAuthenticated Whether the user is authenticated
+         * @param isAdmin Whether the user has admin role
+         * @param username The authenticated username (can be null)
          */
         public static native TemplateInstance list(
             List<ResourceResponse> resources,
@@ -87,7 +95,10 @@ public class CatalogWebController {
             String searchQuery,
             String filterType,
             String message,
-            String error
+            String error,
+            boolean isAuthenticated,
+            boolean isAdmin,
+            String username
         );
 
         /**
@@ -96,11 +107,17 @@ public class CatalogWebController {
          * @param resource Resource to display
          * @param message Success/info message (can be null)
          * @param error Error message (can be null)
+         * @param isAuthenticated Whether the user is authenticated
+         * @param isAdmin Whether the user has admin role
+         * @param username The authenticated username (can be null)
          */
         public static native TemplateInstance view(
             ResourceResponse resource,
             String message,
-            String error
+            String error,
+            boolean isAuthenticated,
+            boolean isAdmin,
+            String username
         );
 
         /**
@@ -211,7 +228,10 @@ public class CatalogWebController {
             searchQuery,
             filterType,
             message,
-            error
+            error,
+            isAuthenticated(),
+            isAdmin(),
+            getUsername()
         );
     }
 
@@ -236,7 +256,7 @@ public class CatalogWebController {
     ) {
         try {
             ResourceResponse resource = resourceService.getResourceById(id);
-            return Templates.view(resource, message, error);
+            return Templates.view(resource, message, error, isAuthenticated(), isAdmin(), getUsername());
         } catch (ResourceNotFoundException e) {
             // Redirect to list with error message
             return Response.seeOther(
@@ -251,11 +271,13 @@ public class CatalogWebController {
 
     /**
      * Display create form for new resource.
+     * Requires admin role.
      *
      * @return Rendered create form
      */
     @GET
     @Path("/new")
+    @RolesAllowed("admin")
     public TemplateInstance newForm() {
         return Templates.form(
             null,
@@ -267,6 +289,7 @@ public class CatalogWebController {
 
     /**
      * Handle resource creation form submission.
+     * Requires admin role.
      *
      * Form Parameters:
      * - title: Resource title (required)
@@ -284,6 +307,7 @@ public class CatalogWebController {
      */
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @RolesAllowed("admin")
     public Response create(
             @FormParam("title") String title,
             @FormParam("type") String type,
@@ -324,12 +348,14 @@ public class CatalogWebController {
 
     /**
      * Display edit form for existing resource.
+     * Requires admin role.
      *
      * @param id Resource ID
      * @return Rendered edit form or redirect
      */
     @GET
     @Path("/{id}/edit")
+    @RolesAllowed("admin")
     public Object editForm(@PathParam("id") Long id) {
         try {
             ResourceResponse resource = resourceService.getResourceById(id);
@@ -349,6 +375,7 @@ public class CatalogWebController {
 
     /**
      * Handle resource update form submission.
+     * Requires admin role.
      *
      * @param id Resource ID
      * @param title Resource title
@@ -360,6 +387,7 @@ public class CatalogWebController {
     @POST
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @RolesAllowed("admin")
     public Response update(
             @PathParam("id") Long id,
             @FormParam("title") String title,
@@ -401,6 +429,7 @@ public class CatalogWebController {
 
     /**
      * Handle resource deletion.
+     * Requires admin role.
      *
      * Note: Resource must be archived first (business rule).
      * For simplicity in web UI, we'll archive and then delete in one operation.
@@ -410,6 +439,7 @@ public class CatalogWebController {
      */
     @POST
     @Path("/{id}/delete")
+    @RolesAllowed("admin")
     public Response delete(@PathParam("id") Long id) {
         try {
             // Archive first (required by business rules)
@@ -451,5 +481,32 @@ public class CatalogWebController {
         } catch (Exception e) {
             return message;
         }
+    }
+
+    /**
+     * Check if the current user is authenticated.
+     *
+     * @return true if authenticated, false otherwise
+     */
+    private boolean isAuthenticated() {
+        return securityIdentity != null && !securityIdentity.isAnonymous();
+    }
+
+    /**
+     * Check if the current user has the admin role.
+     *
+     * @return true if user has admin role, false otherwise
+     */
+    private boolean isAdmin() {
+        return isAuthenticated() && securityIdentity.hasRole("admin");
+    }
+
+    /**
+     * Get the username of the current user.
+     *
+     * @return username or null if not authenticated
+     */
+    private String getUsername() {
+        return isAuthenticated() ? securityIdentity.getPrincipal().getName() : null;
     }
 }

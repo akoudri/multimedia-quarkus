@@ -11,11 +11,13 @@
                 </h1>
                 <p class="text-muted">Manage your multimedia library collection</p>
             </div>
+            {#if isAdmin}
             <div>
                 <a href="/web/catalog/new" class="btn btn-primary btn-lg">
                     <i class="fas fa-plus-circle"></i> Add New Resource
                 </a>
             </div>
+            {/if}
         </div>
     </div>
 </div>
@@ -105,12 +107,18 @@
             {#if searchQuery || filterType}
                 Try adjusting your search filters or <a href="/web/catalog">view all resources</a>.
             {#else}
+                {#if isAdmin}
                 Start by adding your first resource to the catalog.
+                {#else}
+                No resources are currently available in the catalog.
+                {/if}
             {/if}
         </p>
+        {#if isAdmin}
         <a href="/web/catalog/new" class="btn btn-primary">
             <i class="fas fa-plus-circle"></i> Add First Resource
         </a>
+        {/if}
     </div>
 {#else}
     <!-- Resource Cards -->
@@ -193,6 +201,7 @@
                            title="View Details">
                             <i class="fas fa-eye"></i> View
                         </a>
+                        {#if isAdmin}
                         <a href="/web/catalog/{resource.id}/edit"
                            class="btn btn-sm btn-outline-secondary"
                            title="Edit Resource">
@@ -207,6 +216,7 @@
                                 <i class="fas fa-trash"></i> Delete
                             </button>
                         </form>
+                        {/if}
                     </div>
                 </div>
             </div>

@@ -34,6 +34,9 @@ dependencies {
     // Qute Template Engine for Web UI
     implementation 'io.quarkus:quarkus-rest-qute'
 
+    // OIDC Security (Keycloak)
+    implementation 'io.quarkus:quarkus-oidc'
+
     // OpenAPI/Swagger Documentation
     implementation 'io.quarkus:quarkus-smallrye-openapi'
 

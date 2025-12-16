@@ -120,22 +120,47 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/web/catalog">
                             <i class="fas fa-list"></i> All Resources
                         </a>
                     </li>
+                    {#if isAdmin}
                     <li class="nav-item">
                         <a class="nav-link" href="/web/catalog/new">
                             <i class="fas fa-plus-circle"></i> Add Resource
                         </a>
                     </li>
+                    {/if}
                     <li class="nav-item">
                         <a class="nav-link" href="/q/swagger-ui">
                             <i class="fas fa-code"></i> API Docs
                         </a>
                     </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {#if isAuthenticated}
+                    <li class="nav-item">
+                        <span class="nav-link text-light">
+                            <i class="fas fa-user"></i> {username}
+                            {#if isAdmin}
+                            <span class="badge bg-warning text-dark ms-1">Admin</span>
+                            {/if}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/q/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    {#else}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/web/catalog/new">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                    {/if}
                 </ul>
             </div>
         </div>
