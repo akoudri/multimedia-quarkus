@@ -106,14 +106,16 @@ command_exists() {
 }
 
 # Check if a port is in use
+# Note: ss is preferred over lsof because lsof may require elevated permissions
+# to detect Docker container ports
 port_in_use() {
     local port=$1
-    if command_exists lsof; then
-        lsof -i :"$port" >/dev/null 2>&1
+    if command_exists ss; then
+        ss -tuln | grep -q ":$port "
     elif command_exists netstat; then
         netstat -tuln | grep -q ":$port "
-    elif command_exists ss; then
-        ss -tuln | grep -q ":$port "
+    elif command_exists lsof; then
+        lsof -i :"$port" >/dev/null 2>&1
     else
         return 1
     fi

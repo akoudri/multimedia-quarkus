@@ -4,28 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/AuthFilter.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/Dev.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/DevService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/HelloConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/HelloCtrl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/HelloService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/Logged.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/LoggingInterceptor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalog/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalog/src/main/java/com/akfc/catalog/web/controllers/CatalogWebController.java" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/java/com/akfc/catalog/web/controllers/CatalogWebController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/list.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/list.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/view.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/view.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/layout/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/layout/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/users/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/users/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/infrastructure/consul/ConsulRegistrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/infrastructure/consul/ConsulRegistrationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/messaging/ResourceEventConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/messaging/ResourceEventConsumer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/users/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/resources/application.properties" afterDir="false" />
-    </list>
+    <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

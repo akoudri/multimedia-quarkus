@@ -1,0 +1,85 @@
+[0;35m[STEP][0m Starting reviews in development mode...
+[0;34m[INFO][0m Checking infrastructure status...
+
+[0;34m[INFO][0m Service: reviews
+[0;34m[INFO][0m Port: 8083
+[0;34m[INFO][0m Command: ./gradlew :reviews:quarkusDev
+
+Starting a Gradle Daemon, 2 busy and 1 incompatible and 4 stopped Daemons could not be reused, use --status for details
+> Task :reviews:processResources
+> Task :shared-config:compileJava NO-SOURCE
+> Task :shared-config:processResources UP-TO-DATE
+> Task :shared-config:classes UP-TO-DATE
+> Task :shared-config:jar UP-TO-DATE
+> Task :reviews:quarkusGenerateAppModel UP-TO-DATE
+> Task :reviews:quarkusGenerateCode UP-TO-DATE
+> Task :reviews:quarkusGenerateDevAppModel UP-TO-DATE
+> Task :reviews:quarkusGenerateCodeDev UP-TO-DATE
+> Task :reviews:compileJava UP-TO-DATE
+> Task :reviews:classes
+> Task :reviews:processTestResources UP-TO-DATE
+> Task :reviews:compileQuarkusTestGeneratedSourcesJava NO-SOURCE
+> Task :reviews:quarkusGenerateTestAppModel UP-TO-DATE
+> Task :reviews:quarkusGenerateCodeTests UP-TO-DATE
+> Task :reviews:compileTestJava UP-TO-DATE
+> Task :reviews:testClasses UP-TO-DATE
+
+> Task :reviews:quarkusDev
+Changed debug port to 46445 because of a port conflict
+Listening for transport dt_socket at address: 46445
+Press [[94me[39m] to edit command line args (currently '[32m[39m'), [[94mh[39m] for more options>
+[94mTests paused[39m
+Press [[94me[39m] to edit command line args (currently '[32m[39m'), [[94mr[39m] to resume testing, [[94mh[39m] for more options>
+Press [[94me[39m] to edit command line args (currently '[32m[39m'), [[94mr[39m] to resume testing, [[94mo[39m] Toggle test output, [[94mh[39m] for more options>
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+[38;5;145m2025-12-16 20:23:41,434[39m[38;5;188m [39m[38;5;137mWARN [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.qua.config[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mThe "[38;5;188mquarkus.hibernate-orm.database.generation[39m" config property is deprecated and should not be used anymore.[39m[38;5;203m[39m[38;5;227m
+[39m[35m[Hibernate][0m 
+    [34mset[0m client_min_messages = WARNING
+[35m[Hibernate][0m 
+    [34mdrop[0m [34mtable[0m [34mif[0m [34mexists[0m reviews [34mcascade[0m
+[35m[Hibernate][0m 
+    [34mcreate[0m [34mtable[0m reviews (
+        archived [34mboolean[0m [34mnot[0m [34mnull[0m,
+        publication_date [34mdate[0m [34mnot[0m [34mnull[0m,
+        rating [34minteger[0m [34mnot[0m [34mnull[0m [34mcheck[0m ((rating>=1) [34mand[0m (rating<=5)),
+        created_at [34mtimestamp[0m(6) [34mnot[0m [34mnull[0m,
+        id [34mbigint[0m generated [34mby[0m [34mdefault[0m [34mas[0m [34midentity[0m,
+        moderated_at [34mtimestamp[0m(6),
+        resource_id [34mbigint[0m [34mnot[0m [34mnull[0m,
+        updated_at [34mtimestamp[0m(6) [34mnot[0m [34mnull[0m,
+        user_id [34mbigint[0m [34mnot[0m [34mnull[0m,
+        status [34mvarchar[0m(20) [34mnot[0m [34mnull[0m [34mcheck[0m ((status [34min[0m ([36m'PENDING'[0m,[36m'APPROVED'[0m,[36m'REJECTED'[0m,[36m'FLAGGED'[0m))),
+        created_by [34mvarchar[0m(100),
+        moderated_by [34mvarchar[0m(100),
+        modified_by [34mvarchar[0m(100),
+        archive_reason [34mvarchar[0m(500),
+        moderation_reason [34mvarchar[0m(500),
+        comment TEXT [34mnot[0m [34mnull[0m,
+        [34mprimary[0m [34mkey[0m (id)
+    )
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_review_resource 
+       [34mon[0m reviews (resource_id)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_review_user 
+       [34mon[0m reviews (user_id)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_review_rating 
+       [34mon[0m reviews (rating)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_review_status 
+       [34mon[0m reviews (status)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_review_archived 
+       [34mon[0m reviews (archived)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_review_publication_date 
+       [34mon[0m reviews (publication_date)
+[38;5;145m2025-12-16 20:23:42,189[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mcom.akf.rev.inf.con.ConsulRegistrationService[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151mConsul registration is disabled[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:42,229[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.quarkus[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39m[38;5;188mreviews-service 1.0.0-SNAPSHOT[39m [38;5;188mon JVM[39m (powered by Quarkus [38;5;188m3.28.4[39m) started in [38;5;188m3.584[39ms. [38;5;188mListening on: http://0.0.0.0:8083[39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:42,229[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.quarkus[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mProfile[38;5;188m[39m [38;5;188mdev[39m activated. [38;5;188mLive Coding activated.[39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:42,229[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.quarkus[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mInstalled features: [[38;5;188magroal, cache, cdi, compose, hibernate-orm, hibernate-orm-panache, hibernate-validator, jdbc-postgresql, kafka-client, messaging, messaging-kafka, micrometer, narayana-jta, opentelemetry, redis-client, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, smallrye-health, smallrye-openapi, swagger-ui, vertx[39m][39m[38;5;203m[39m[38;5;227m
+[39m
