@@ -215,30 +215,30 @@ public class ResourceRepository implements PanacheRepository<Resource> {
      */
     public List<Resource> findByCriteria(ResourceType type, ResourceStatus status,
                                          Integer yearFrom, Integer yearTo) {
-        StringBuilder query = new StringBuilder("archived = :archived");
-        io.quarkus.panache.common.Parameters params = io.quarkus.panache.common.Parameters.with("archived", false);
+        StringBuilder query = new StringBuilder("archived = false");
+        List<Object> params = new ArrayList<>();
 
         if (type != null) {
-            query.append(" AND type = :type");
-            params = params.and("type", type);
+            query.append(" AND type = ?").append(params.size() + 1);
+            params.add(type);
         }
 
         if (status != null) {
-            query.append(" AND status = :status");
-            params = params.and("status", status);
+            query.append(" AND status = ?").append(params.size() + 1);
+            params.add(status);
         }
 
         if (yearFrom != null) {
-            query.append(" AND year >= :yearFrom");
-            params = params.and("yearFrom", yearFrom);
+            query.append(" AND year >= ?").append(params.size() + 1);
+            params.add(yearFrom);
         }
 
         if (yearTo != null) {
-            query.append(" AND year <= :yearTo");
-            params = params.and("yearTo", yearTo);
+            query.append(" AND year <= ?").append(params.size() + 1);
+            params.add(yearTo);
         }
 
-        return find(query.toString(), params).list();
+        return list(query.toString(), params.toArray());
     }
 
     /**
@@ -346,19 +346,17 @@ public class ResourceRepository implements PanacheRepository<Resource> {
      *
      * @return List of Object arrays: [type, count, avgYear]
      */
-    @SuppressWarnings("deprecation")
     public List<Object[]> getStatisticsByType() {
         CriteriaBuilder cb = em.getCriteriaBuilder();
         CriteriaQuery<Object[]> cq = cb.createQuery(Object[].class);
         Root<Resource> resource = cq.from(Resource.class);
 
         // SELECT type, COUNT(*), AVG(year)
-        // Note: multiselect is deprecated in JPA 3.2 but no clear replacement for Object[] queries
-        cq.multiselect(List.of(
+        cq.multiselect(
             resource.get("type"),
             cb.count(resource),
             cb.avg(resource.get("year"))
-        ));
+        );
 
         // WHERE archived = false
         cq.where(cb.isFalse(resource.get("archived")));
@@ -414,7 +412,7 @@ public class ResourceRepository implements PanacheRepository<Resource> {
      */
     public List<Resource> findAllPaginated(int pageIndex, int pageSize) {
         return findAll()
-            .page(pageIndex, pageSize)
+            .page(io.quarkus.panache.common.Page.of(pageIndex, pageSize))
             .list();
     }
 

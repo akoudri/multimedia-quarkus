@@ -9,7 +9,7 @@ volumes:
   kafka-data:
   prometheus-data:
   grafana-data:
-  jaeger-data:
+  zipkin-data:
 
 networks:
   library-network:
@@ -194,23 +194,44 @@ services:
 
   # Observability Stack
 
-  jaeger:
-    image: jaegertracing/all-in-one:1.60
-    container_name: jaeger
+  # Zipkin - Distributed Tracing Backend
+  zipkin:
+    image: openzipkin/zipkin:3.4
+    container_name: zipkin
     restart: unless-stopped
     environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - METRICS_STORAGE_TYPE=prometheus
-      - PROMETHEUS_SERVER_URL=http://prometheus:9090
+      - STORAGE_TYPE=mem
+      - JAVA_OPTS=-Xms256m -Xmx512m
     ports:
-      - "16686:16686"  # Jaeger UI
-      - "4317:4317"    # OTLP gRPC receiver
-      - "4318:4318"    # OTLP HTTP receiver
-      - "14250:14250"  # Jaeger gRPC
+      - "9411:9411"    # Zipkin UI and API
     networks:
       - library-network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:16686"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9411/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # OpenTelemetry Collector - Receives OTLP and forwards to Zipkin
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    container_name: otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"    # OTLP gRPC receiver
+      - "4318:4318"    # OTLP HTTP receiver
+      - "8888:8888"    # Prometheus metrics exposed by the collector
+      - "8889:8889"    # Prometheus exporter metrics
+    networks:
+      - library-network
+    depends_on:
+      zipkin:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8888/metrics"]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -260,7 +281,7 @@ services:
       - library-network
     depends_on:
       - prometheus
-      - jaeger
+      - zipkin
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 10s

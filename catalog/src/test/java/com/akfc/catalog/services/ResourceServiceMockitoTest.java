@@ -9,6 +9,7 @@ import com.akfc.catalog.dto.ResourceResponse;
 import com.akfc.catalog.dto.UpdateResourceRequest;
 import com.akfc.catalog.errors.ResourceAlreadyArchivedException;
 import com.akfc.catalog.errors.ResourceNotFoundException;
+import com.akfc.catalog.messaging.ResourceEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
-import com.akfc.catalog.messaging.ResourceEventPublisher;
-
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.AdditionalMatchers.gt;

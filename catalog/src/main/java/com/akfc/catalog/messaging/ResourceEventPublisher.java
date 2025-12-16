@@ -22,7 +22,8 @@ public class ResourceEventPublisher {
     /**
      * Emitter for the resource-events channel configured in application.properties.
      *
-     * Messages sent to this emitter are published to the Kafka topic: library-resources
+     * Messages sent to this emitter are published to the Kafka topic:
+     * - Topic: library-resources
      */
     @Inject
     @Channel("resource-events")
@@ -45,7 +46,6 @@ public class ResourceEventPublisher {
 
         LOG.infof("Publishing resource created event: %s", event);
 
-        // Send message to Kafka topic
         resourceEventsEmitter.send(event);
 
         LOG.infof("Resource created event published successfully for resource ID: %d", resource.id);
@@ -57,7 +57,20 @@ public class ResourceEventPublisher {
      * @param resource The updated resource
      */
     public void publishResourceUpdated(Resource resource) {
-        //TODO
+        ResourceCreatedEvent event = new ResourceCreatedEvent(
+            resource.id,
+            resource.title,
+            resource.type.name(),
+            resource.year,
+            resource.createdAt,
+            resource.modifiedBy
+        );
+
+        LOG.infof("Publishing resource updated event: %s", event);
+
+        resourceEventsEmitter.send(event);
+
+        LOG.infof("Resource updated event published successfully for resource ID: %d", resource.id);
     }
 
     /**
@@ -67,6 +80,19 @@ public class ResourceEventPublisher {
      * @param title Title of the deleted resource
      */
     public void publishResourceDeleted(Long resourceId, String title) {
-        //TODO
+        ResourceCreatedEvent event = new ResourceCreatedEvent(
+            resourceId,
+            title,
+            null,
+            null,
+            null,
+            null
+        );
+
+        LOG.infof("Publishing resource deleted event: %s", event);
+
+        resourceEventsEmitter.send(event);
+
+        LOG.infof("Resource deleted event published successfully for resource ID: %d", resourceId);
     }
 }
