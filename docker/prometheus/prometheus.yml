@@ -59,6 +59,28 @@ scrape_configs:
           application: 'multimedia-library'
           tier: 'backend'
 
+  # Reactive Reviews Service
+  - job_name: 'reactive-reviews-service'
+    metrics_path: '/q/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8084']
+        labels:
+          service: 'reactive-reviews'
+          application: 'multimedia-library'
+          tier: 'backend'
+
+  # Notifications Batch Service
+  - job_name: 'notifications-service'
+    metrics_path: '/q/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8085']
+        labels:
+          service: 'notifications'
+          application: 'multimedia-library'
+          tier: 'batch'
+
   # PostgreSQL Exporters (if you add them later)
   # - job_name: 'postgres-catalog'
   #   static_configs:
@@ -69,22 +91,21 @@ scrape_configs:
   #   static_configs:
   #     - targets: ['redis-exporter:9121']
 
-  # RabbitMQ metrics
-  - job_name: 'rabbitmq'
-    metrics_path: '/metrics'
-    scrape_interval: 15s
+  # OpenTelemetry Collector metrics
+  - job_name: 'otel-collector'
     static_configs:
-      - targets: ['rabbitmq:15692']
+      - targets: ['otel-collector:8888']
         labels:
-          service: 'rabbitmq'
-          application: 'multimedia-library'
-          tier: 'messaging'
-
-  # Jaeger metrics (internal metrics from Jaeger itself)
-  - job_name: 'jaeger'
-    static_configs:
-      - targets: ['jaeger:14269']
-        labels:
-          service: 'jaeger'
+          service: 'otel-collector'
           application: 'multimedia-library'
           tier: 'observability'
+
+  # Zipkin metrics (if enabled)
+  # - job_name: 'zipkin'
+  #   metrics_path: '/prometheus'
+  #   static_configs:
+  #     - targets: ['zipkin:9411']
+  #       labels:
+  #         service: 'zipkin'
+  #         application: 'multimedia-library'
+  #         tier: 'observability'

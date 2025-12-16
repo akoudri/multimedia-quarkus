@@ -1,5 +1,5 @@
 # Grafana Datasources Provisioning
-# Auto-configures Prometheus and Jaeger data sources
+# Auto-configures Prometheus and Zipkin data sources
 
 apiVersion: 1
 
@@ -17,11 +17,11 @@ datasources:
       httpMethod: POST
     version: 1
 
-  # Jaeger datasource for distributed tracing
-  - name: Jaeger
-    type: jaeger
+  # Zipkin datasource for distributed tracing
+  - name: Zipkin
+    type: zipkin
     access: proxy
-    url: http://jaeger:16686
+    url: http://zipkin:9411
     isDefault: false
     editable: true
     jsonData:
@@ -38,12 +38,3 @@ datasources:
       nodeGraph:
         enabled: true
     version: 1
-
-  # Tempo datasource (alternative tracing backend - commented out as we use Jaeger)
-  # - name: Tempo
-  #   type: tempo
-  #   access: proxy
-  #   url: http://tempo:3200
-  #   isDefault: false
-  #   editable: true
-  #   version: 1

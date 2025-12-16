@@ -39,6 +39,12 @@ subprojects {
         // Consul service registration (using REST client)
         implementation 'io.quarkus:quarkus-rest-client-jackson'
 
+        // OpenTelemetry for distributed tracing
+        implementation 'io.quarkus:quarkus-opentelemetry'
+
+        // Micrometer metrics with Prometheus registry
+        implementation 'io.quarkus:quarkus-micrometer-registry-prometheus'
+
         testImplementation 'io.quarkus:quarkus-junit5'
         testImplementation 'io.rest-assured:rest-assured'
     }
