@@ -90,7 +90,7 @@ public class ConsulRegistrationService {
             LOG.debugf("Auto-detected service address: %s", detectedAddress);
             return detectedAddress;
         } catch (Exception e) {
-            LOG.warn("Failed to auto-detect IP address, falling back to localhost", e);
+            LOG.warn("Failed to auto-detect service address, falling back to localhost", e);
             return "localhost";
         }
     }
@@ -98,8 +98,6 @@ public class ConsulRegistrationService {
     private void registerService() throws Exception {
         serviceId = serviceName + "-" + servicePort;
         String serviceAddress = getServiceAddress();
-
-        LOG.infof("Registering service '%s' with address: %s:%d", serviceName, serviceAddress, servicePort);
 
         String registrationJson = String.format("""
             {
