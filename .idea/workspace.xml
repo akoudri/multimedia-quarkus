@@ -6,7 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/dev-all.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/dev-all.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/java/com/akfc/catalog/web/controllers/CatalogWebController.java" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/java/com/akfc/catalog/web/controllers/CatalogWebController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/form.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/form.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/reviews/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/reviews/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/config.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/config.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/users/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

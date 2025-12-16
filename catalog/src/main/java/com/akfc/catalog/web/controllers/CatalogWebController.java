@@ -127,12 +127,18 @@ public class CatalogWebController {
          * @param isEdit True if editing, false if creating
          * @param resourceTypes Available resource types
          * @param errors Validation errors map (can be null)
+         * @param isAuthenticated Whether the user is authenticated
+         * @param isAdmin Whether the user has admin role
+         * @param username The authenticated username (can be null)
          */
         public static native TemplateInstance form(
             ResourceResponse resource,
             boolean isEdit,
             ResourceType[] resourceTypes,
-            java.util.Map<String, String> errors
+            java.util.Map<String, String> errors,
+            boolean isAuthenticated,
+            boolean isAdmin,
+            String username
         );
     }
 
@@ -283,7 +289,10 @@ public class CatalogWebController {
             null,
             false,
             ResourceType.values(),
-            null
+            null,
+            isAuthenticated(),
+            isAdmin(),
+            getUsername()
         );
     }
 
@@ -363,7 +372,10 @@ public class CatalogWebController {
                 resource,
                 true,
                 ResourceType.values(),
-                null
+                null,
+                isAuthenticated(),
+                isAdmin(),
+                getUsername()
             );
         } catch (ResourceNotFoundException e) {
             // Redirect to list with error

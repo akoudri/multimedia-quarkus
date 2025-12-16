@@ -1,0 +1,140 @@
+[0;35m[STEP][0m Starting users in development mode...
+[0;34m[INFO][0m Checking infrastructure status...
+
+[0;34m[INFO][0m Service: users
+[0;34m[INFO][0m Port: 8082
+[0;34m[INFO][0m Command: ./gradlew :users:quarkusDev
+
+Starting a Gradle Daemon, 1 busy and 1 incompatible and 4 stopped Daemons could not be reused, use --status for details
+> Task :shared-config:compileJava NO-SOURCE
+> Task :shared-config:processResources UP-TO-DATE
+> Task :shared-config:classes UP-TO-DATE
+> Task :shared-config:jar UP-TO-DATE
+> Task :users:processResources
+> Task :users:quarkusGenerateAppModel UP-TO-DATE
+> Task :users:quarkusGenerateCode UP-TO-DATE
+> Task :users:quarkusGenerateDevAppModel UP-TO-DATE
+> Task :users:quarkusGenerateCodeDev UP-TO-DATE
+> Task :users:compileJava
+> Task :users:classes
+> Task :users:processTestResources UP-TO-DATE
+> Task :users:compileQuarkusTestGeneratedSourcesJava NO-SOURCE
+> Task :users:quarkusGenerateTestAppModel UP-TO-DATE
+> Task :users:quarkusGenerateCodeTests UP-TO-DATE
+> Task :users:compileTestJava UP-TO-DATE
+> Task :users:testClasses UP-TO-DATE
+
+> Task :users:quarkusDev
+Changed debug port to 35809 because of a port conflict
+Listening for transport dt_socket at address: 35809
+Press [[94me[39m] to edit command line args (currently '[32m[39m'), [[94mh[39m] for more options>
+[94mTests paused[39m
+Press [[94me[39m] to edit command line args (currently '[32m[39m'), [[94mr[39m] to resume testing, [[94mh[39m] for more options>
+Press [[94me[39m] to edit command line args (currently '[32m[39m'), [[94mr[39m] to resume testing, [[94mo[39m] Toggle test output, [[94mh[39m] for more options>
+__  ____  __  _____   ___  __ ____  ______ 
+ --/ __ \/ / / / _ | / _ \/ //_/ / / / __/ 
+ -/ /_/ / /_/ / __ |/ , _/ ,< / /_/ /\ \   
+--\___\_\____/_/ |_/_/|_/_/|_|\____/___/   
+[38;5;145m2025-12-16 20:23:39,811[39m[38;5;188m [39m[38;5;137mWARN [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.qua.config[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mThe "[38;5;188mquarkus.hibernate-orm.database.generation[39m" config property is deprecated and should not be used anymore.[39m[38;5;203m[39m[38;5;227m
+[39m[35m[Hibernate][0m 
+    [34mset[0m client_min_messages = WARNING
+[35m[Hibernate][0m 
+    [34mdrop[0m [34mtable[0m [34mif[0m [34mexists[0m notifications [34mcascade[0m
+[35m[Hibernate][0m 
+    [34mdrop[0m [34mtable[0m [34mif[0m [34mexists[0m user_subscriptions [34mcascade[0m
+[35m[Hibernate][0m 
+    [34mdrop[0m [34mtable[0m [34mif[0m [34mexists[0m users [34mcascade[0m
+[35m[Hibernate][0m 
+    [34mcreate[0m [34mtable[0m notifications (
+        archived [34mboolean[0m [34mnot[0m [34mnull[0m,
+        is_read [34mboolean[0m [34mnot[0m [34mnull[0m,
+        created_at [34mtimestamp[0m(6) [34mnot[0m [34mnull[0m,
+        id [34mbigint[0m generated [34mby[0m [34mdefault[0m [34mas[0m [34midentity[0m,
+        read_at [34mtimestamp[0m(6),
+        resource_id [34mbigint[0m,
+        user_id [34mbigint[0m,
+        type [34mvarchar[0m(30) [34mnot[0m [34mnull[0m [34mcheck[0m ((type [34min[0m ([36m'RESOURCE_CREATED'[0m,[36m'RESOURCE_UPDATED'[0m,[36m'RESOURCE_DELETED'[0m,[36m'[34mSYSTEM[0m'[0m,[36m'ACCOUNT'[0m))),
+        resource_type [34mvarchar[0m(50),
+        created_by [34mvarchar[0m(100),
+        message [34mvarchar[0m(1000) [34mnot[0m [34mnull[0m,
+        title [34mvarchar[0m(255) [34mnot[0m [34mnull[0m,
+        [34mprimary[0m [34mkey[0m (id)
+    )
+[35m[Hibernate][0m 
+    [34mcreate[0m [34mtable[0m user_subscriptions (
+        active [34mboolean[0m [34mnot[0m [34mnull[0m,
+        created_at [34mtimestamp[0m(6) [34mnot[0m [34mnull[0m,
+        id [34mbigint[0m generated [34mby[0m [34mdefault[0m [34mas[0m [34midentity[0m,
+        modified_at [34mtimestamp[0m(6),
+        user_id [34mbigint[0m [34mnot[0m [34mnull[0m,
+        resource_type [34mvarchar[0m(20) [34mnot[0m [34mnull[0m [34mcheck[0m ((resource_type [34min[0m ([36m'BOOK'[0m,[36m'MOVIE'[0m,[36m'MUSIC'[0m))),
+        [34mprimary[0m [34mkey[0m (id),
+        [34mconstraint[0m uk_user_resource_type [34munique[0m (user_id, resource_type)
+    )
+[35m[Hibernate][0m 
+    [34mcreate[0m [34mtable[0m users (
+        archived [34mboolean[0m [34mnot[0m [34mnull[0m,
+        registration_date [34mdate[0m [34mnot[0m [34mnull[0m,
+        created_at [34mtimestamp[0m(6) [34mnot[0m [34mnull[0m,
+        id [34mbigint[0m generated [34mby[0m [34mdefault[0m [34mas[0m [34midentity[0m,
+        last_login_at [34mtimestamp[0m(6),
+        status_changed_at [34mtimestamp[0m(6),
+        updated_at [34mtimestamp[0m(6) [34mnot[0m [34mnull[0m,
+        phone_number [34mvarchar[0m(20),
+        role [34mvarchar[0m(20) [34mnot[0m [34mnull[0m [34mcheck[0m ((role [34min[0m ([36m'[34mUSER[0m'[0m,[36m'MODERATOR'[0m))),
+        account_status [34mvarchar[0m(30) [34mnot[0m [34mnull[0m [34mcheck[0m ((account_status [34min[0m ([36m'ACTIVE'[0m,[36m'SUSPENDED'[0m,[36m'LOCKED'[0m,[36m'PENDING_VERIFICATION'[0m))),
+        created_by [34mvarchar[0m(100),
+        first_name [34mvarchar[0m(100) [34mnot[0m [34mnull[0m,
+        last_name [34mvarchar[0m(100) [34mnot[0m [34mnull[0m,
+        modified_by [34mvarchar[0m(100),
+        archive_reason [34mvarchar[0m(500),
+        status_reason [34mvarchar[0m(500),
+        email [34mvarchar[0m(255) [34mnot[0m [34mnull[0m [34munique[0m,
+        [34mprimary[0m [34mkey[0m (id)
+    )
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_notification_user 
+       [34mon[0m notifications (user_id)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_notification_type 
+       [34mon[0m notifications (type)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_notification_read 
+       [34mon[0m notifications (is_read)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_notification_created 
+       [34mon[0m notifications (created_at)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_notification_resource 
+       [34mon[0m notifications (resource_id)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_subscription_user 
+       [34mon[0m user_subscriptions (user_id)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_subscription_type 
+       [34mon[0m user_subscriptions (resource_type)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_subscription_active 
+       [34mon[0m user_subscriptions (active)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_user_status 
+       [34mon[0m users (account_status)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_user_role 
+       [34mon[0m users (role)
+[35m[Hibernate][0m 
+    [34mcreate[0m index idx_user_archived 
+       [34mon[0m users (archived)
+[38;5;145m2025-12-16 20:23:40,724[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.sma.rea.mes.kafka[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mSRMSG18229: Configured topics for channel '[38;5;188mresource-events[39m': [38;5;188m[library-resources][39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:40,729[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.sma.rea.mes.kafka[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151mSRMSG18214: Key deserializer omitted, using String as default[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:40,873[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.sma.rea.mes.kafka[39m[38;5;188m] ([39m[38;5;71msmallrye-kafka-producer-thread-0[39m[38;5;188m) [39m[38;5;151m[39mSRMSG18258: Kafka producer [38;5;188mkafka-producer-user-events[39m, connected to Kafka brokers '[38;5;188mlocalhost:29092[39m', is configured to write records to '[38;5;188mlibrary-users[39m'[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:40,881[39m[38;5;188m [39m[38;5;137mWARN [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.sma.rea.mes.provider[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mSRMSG00207: [38;5;188mSome components are not connected to either downstream consumers or upstream producers:
+	- OutgoingConnector{channel:'user-events', attribute:'mp.messaging.outgoing.user-events'} has no upstream
+[39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:40,892[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.sma.rea.mes.kafka[39m[38;5;188m] ([39m[38;5;71msmallrye-kafka-consumer-thread-0[39m[38;5;188m) [39m[38;5;151m[39mSRMSG18257: Kafka consumer [38;5;188mkafka-consumer-resource-events[39m, connected to Kafka brokers '[38;5;188mlocalhost:29092[39m', belongs to the '[38;5;188musers-service[39m' consumer group and is configured to poll records from [38;5;188m[library-resources][39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:40,962[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mcom.akf.use.inf.con.ConsulRegistrationService[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151mConsul registration is disabled[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:41,009[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.quarkus[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39m[38;5;188musers-service 1.0.0-SNAPSHOT[39m [38;5;188mon JVM[39m (powered by Quarkus [38;5;188m3.28.4[39m) started in [38;5;188m4.596[39ms. [38;5;188mListening on: http://0.0.0.0:8082[39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:41,010[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.quarkus[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mProfile[38;5;188m[39m [38;5;188mdev[39m activated. [38;5;188mLive Coding activated.[39m[39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:41,010[39m[38;5;188m [39m[38;5;107mINFO [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69mio.quarkus[39m[38;5;188m] ([39m[38;5;71mQuarkus Main Thread[39m[38;5;188m) [39m[38;5;151m[39mInstalled features: [[38;5;188magroal, cache, cdi, compose, hibernate-orm, hibernate-orm-panache, hibernate-validator, jdbc-postgresql, kafka-client, messaging, messaging-kafka, micrometer, narayana-jta, opentelemetry, redis-client, rest, rest-client, rest-client-jackson, rest-jackson, smallrye-context-propagation, smallrye-health, smallrye-openapi, swagger-ui, vertx[39m][39m[38;5;203m[39m[38;5;227m
+[39m[38;5;145m2025-12-16 20:23:41,022[39m[38;5;188m [39m[38;5;137mWARN [39m[38;5;188m traceId=[39m[38;5;85m[39m[38;5;188m, spanId=[39m[38;5;85m[39m[38;5;188m [[39m[38;5;69morg.apa.kaf.cli.NetworkClient[39m[38;5;188m] ([39m[38;5;71msmallrye-kafka-consumer-thread-0[39m[38;5;188m) [39m[38;5;151m[Consumer clientId=kafka-consumer-resource-events, groupId=users-service] The metadata response from the cluster reported a recoverable issue with correlation id 2 : {library-resources=UNKNOWN_TOPIC_OR_PARTITION}[39m[38;5;203m[39m[38;5;227m
+[39m
