@@ -32,7 +32,7 @@ public class ResourceEventConsumer {
     /**
      * Handle resource created events.
      *
-     * This method is called automatically when a message arrives on the library-resources Kafka topic.
+     * This method is called automatically when a message arrives on the resource-events Kafka topic.
      *
      * Creates notifications only for users subscribed to the resource type.
      *
@@ -103,7 +103,7 @@ public class ResourceEventConsumer {
             LOG.errorf(e, "Error processing resource created event for resource ID: %d", event.resourceId);
             // Note: Depending on error handling strategy, you might want to:
             // - Acknowledge the message (consume it even if processing failed)
-            // - Reject the message (send to dead letter topic)
+            // - Reject the message (send to dead letter queue)
             // - Retry processing (with exponential backoff)
             throw e; // Re-throw to trigger message rejection/retry based on Kafka configuration
         }
@@ -118,6 +118,66 @@ public class ResourceEventConsumer {
      * Creates notifications only for users subscribed to the resource type.
      */
     public void onResourceUpdated(ResourceCreatedEvent event) {
-        //TODO
+        LOG.infof("Resource updated: ID=%d, Title='%s'", event.resourceId, event.title);
+
+        try {
+            // Parse the resource type from the event
+            if (event.type == null) {
+                LOG.warnf("Resource update event has no type, skipping notification: %s", event);
+                return;
+            }
+
+            ResourceType resourceType;
+            try {
+                resourceType = ResourceType.valueOf(event.type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                LOG.warnf("Unknown resource type '%s' in update event, skipping notification", event.type);
+                return;
+            }
+
+            // Find all users subscribed to this resource type
+            List<Long> subscribedUserIds = userService.getUsersSubscribedTo(resourceType);
+
+            if (subscribedUserIds.isEmpty()) {
+                LOG.infof("No users subscribed to %s, no update notifications created", resourceType);
+                return;
+            }
+
+            LOG.infof("Found %d users subscribed to %s for update notification", subscribedUserIds.size(), resourceType);
+
+            // Prepare notification content
+            String title = String.format("%s Updated", resourceType.toString());
+            String message = String.format(
+                "A %s has been updated: '%s'",
+                resourceType.toString().toLowerCase(),
+                event.title
+            );
+
+            // Create individual notifications for each subscribed user
+            int notificationCount = 0;
+            for (Long userId : subscribedUserIds) {
+                try {
+                    notificationService.createNotification(
+                        userId,
+                        NotificationType.RESOURCE_UPDATED,
+                        title,
+                        message,
+                        event.resourceId,
+                        event.type,
+                        "catalog-service"
+                    );
+                    notificationCount++;
+                } catch (Exception e) {
+                    LOG.errorf(e, "Failed to create update notification for user %d", userId);
+                    // Continue with other users even if one fails
+                }
+            }
+
+            LOG.infof("Created %d update notifications for resource ID: %d", notificationCount, event.resourceId);
+
+        } catch (Exception e) {
+            LOG.errorf(e, "Error processing resource updated event for resource ID: %d", event.resourceId);
+            throw e;
+        }
     }
 }

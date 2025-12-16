@@ -6,7 +6,7 @@ plugins {
 // Module-specific dependencies can be added here
 dependencies {
     // Shared configuration module
-    // implementation project(':shared-config')
+    implementation project(':shared-config')
 
     // Hibernate ORM with Panache for JPA
     implementation 'io.quarkus:quarkus-hibernate-orm-panache'
@@ -33,6 +33,9 @@ dependencies {
 
     // Qute Template Engine for Web UI
     implementation 'io.quarkus:quarkus-rest-qute'
+
+    // OIDC Security (Keycloak)
+    implementation 'io.quarkus:quarkus-oidc'
 
     // OpenAPI/Swagger Documentation
     implementation 'io.quarkus:quarkus-smallrye-openapi'

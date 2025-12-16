@@ -4,7 +4,41 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="" />
+    <list default="true" id="cf285553-8b7b-431a-98c9-13b445406a05" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/docker/keycloak/realm-export.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logs/catalog.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logs/catalog.pid" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logs/reviews.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logs/reviews.pid" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logs/users.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logs/users.pid" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/AuthFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/Dev.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/DevService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/HelloConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/HelloCtrl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/HelloService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/Logged.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/hello/LoggingInterceptor.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/events/ResourceCreatedEventDeserializer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/java/com/akfc/catalog/web/controllers/CatalogWebController.java" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/java/com/akfc/catalog/web/controllers/CatalogWebController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/form.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/form.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/list.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/list.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/view.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/catalog/view.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/catalog/src/main/resources/templates/layout/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/catalog/src/main/resources/templates/layout/base.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/.env" beforeDir="false" afterPath="$PROJECT_DIR$/docker/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/config.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/config.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/dev-all.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/dev-all.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/users/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/users/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/infrastructure/consul/ConsulRegistrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/infrastructure/consul/ConsulRegistrationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/messaging/ResourceEventConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/java/com/akfc/users/messaging/ResourceEventConsumer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/users/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/users/src/main/resources/application.properties" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -67,20 +101,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;SHELLCHECK.PATH&quot;: &quot;/home/ali/.local/share/JetBrains/IdeaIC2025.2/Shell Script/shellcheck&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/ali/Tmp/quarkus-training&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "SHELLCHECK.PATH": "/home/ali/.local/share/JetBrains/IdeaIC2025.2/Shell Script/shellcheck",
+    "git-widget-placeholder": "tp",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/ali/Tmp/quarkus-training",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="RunManager">
     <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
       <module name="bibliotheque-multimedia" />

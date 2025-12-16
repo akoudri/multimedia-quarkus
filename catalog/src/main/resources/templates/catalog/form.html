@@ -94,13 +94,11 @@
                                 required>
                             <option value="">Select a type...</option>
                             {#for type in resourceTypes}
-                            <option value="{type}" {#if resource && resource.type == type}selected{/if}>
-                                {#switch type}
+                            <option value="{type.name()}" {#if resource && resource.type == type}selected{/if}>
+                                {#switch type.name()}
                                     {#case 'BOOK'}Book{/case}
                                     {#case 'MOVIE'}Movie{/case}
                                     {#case 'MUSIC'}Music{/case}
-                                    {#case 'MAGAZINE'}Magazine{/case}
-                                    {#case 'GAME'}Game{/case}
                                 {/switch}
                             </option>
                             {/for}

@@ -1,275 +1,701 @@
-# Bibliothèque Multimédia - Quarkus Mono-Repo
+# Bibliothèque Multimédia - Microservices Quarkus
 
-A Gradle mono-repository project containing three independent Quarkus microservices for managing a multimedia library system.
+Projet mono-repo Gradle contenant une architecture microservices complète pour la gestion d'une bibliothèque multimédia, développée avec Quarkus.
 
-## Project Structure
+## Architecture
 
 ```
-multimedia-library/
-├── catalogue/          # Catalog management service
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/
-│   │   │   └── resources/
-│   │   └── test/
-│   └── build.gradle
-├── users/             # User management service
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/
-│   │   │   └── resources/
-│   │   └── test/
-│   └── build.gradle
-├── reviews/           # Reviews and ratings service
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/
-│   │   │   └── resources/
-│   │   └── test/
-│   └── build.gradle
-├── build.gradle       # Root build configuration
-├── settings.gradle    # Multi-module project settings
-└── gradle.properties  # Shared Gradle properties
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CLIENTS                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            KEYCLOAK (IAM)                                    │
+│                              :8180/auth                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MICROSERVICES                                        │
+├─────────────┬─────────────┬─────────────┬─────────────────┬─────────────────┤
+│   Catalog   │    Users    │   Reviews   │ Reactive Reviews│  Notifications  │
+│   :8081     │    :8082    │    :8083    │     :8084       │     :8085       │
+└──────┬──────┴──────┬──────┴──────┬──────┴────────┬────────┴────────┬────────┘
+       │             │             │               │                 │
+       ▼             ▼             ▼               ▼                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         INFRASTRUCTURE                                       │
+├─────────────┬─────────────┬─────────────┬─────────────┬─────────────────────┤
+│ PostgreSQL  │    Redis    │   Consul    │    Kafka    │    Observability    │
+│  (x3 DBs)   │    :6379    │    :8500    │   :29092    │ Prometheus/Grafana  │
+│ 5432/6543/  │   Cache     │  Discovery  │  Messaging  │ Zipkin/OTel         │
+│    7654     │             │             │             │                     │
+└─────────────┴─────────────┴─────────────┴─────────────┴─────────────────────┘
 ```
 
-## Philosophy
+## Microservices
 
-This project follows a **mono-repo multi-module architecture** where:
+| Service | Port | Description | Base de données |
+|---------|------|-------------|-----------------|
+| **catalog** | 8081 | Gestion du catalogue de ressources (livres, DVD, etc.) | catalog (5432) |
+| **users** | 8082 | Gestion des utilisateurs et authentification | users (7654) |
+| **reviews** | 8083 | Gestion des avis et notations | reviews (6543) |
+| **reactive-reviews** | 8084 | Version réactive du service reviews | reviews (6544) |
+| **notifications** | 8085 | Service batch de notifications | users (7654) |
 
-- **Independent Services**: Each module (`catalogue`, `users`, `reviews`) is an autonomous microservice with its own domain logic and can be developed, tested, and deployed independently.
-- **Centralized Configuration**: Shared dependencies and build configurations are managed at the root level to ensure consistency across modules.
-- **Quarkus Framework**: All modules leverage Quarkus for fast startup times, low memory footprint, and developer productivity with live coding.
-- **Gradle Multi-Project Build**: Uses Gradle's multi-project capabilities to manage all modules from a single repository while maintaining module independence.
+## Prérequis
 
-### Benefits of This Approach:
+- **Java 21** ou supérieur
+- **Docker** et Docker Compose
+- **Gradle 8.x** (wrapper inclus)
 
-1. **Single Source of Truth**: All related services in one repository
-2. **Shared Build Configuration**: Dependency management centralized in root `build.gradle`
-3. **Easy Refactoring**: Changes across multiple services can be committed atomically
-4. **Consistent Tooling**: Same build tools, testing frameworks, and development practices
-5. **Simplified CI/CD**: Build and test all services in a single pipeline
-
-## Prerequisites
-
-- Java 17 or higher
-- Gradle 8.x or higher (wrapper included)
-- Quarkus CLI (optional, for generating modules)
-
-## Getting Started
-
-### Building All Modules
-
-From the root directory:
+### Vérification de l'environnement
 
 ```bash
-./gradlew build
+./scripts/env-check.sh
 ```
 
-### Building a Specific Module
+## Démarrage rapide
+
+### 1. Démarrer l'infrastructure
 
 ```bash
-./gradlew :catalogue:build
-./gradlew :users:build
-./gradlew :reviews:build
+# Démarrer tous les services d'infrastructure
+./scripts/infra-up.sh
+
+# Ou uniquement les bases de données
+./scripts/infra-up.sh --only-db
 ```
 
-## Running Services in Development Mode
-
-Quarkus provides a powerful development mode with live reload capabilities.
-
-### Start the Catalogue Service
+### 2. Lancer un service en développement
 
 ```bash
-cd catalogue
-../gradlew quarkusDev
+# Démarrer le service catalog avec hot-reload
+./scripts/dev.sh catalog
+
+# Avec débogage distant (port 5005)
+./scripts/dev.sh catalog --debug
 ```
 
-Or from root:
+### 3. Vérifier l'état du système
 
 ```bash
-./gradlew :catalogue:quarkusDev
+# Statut complet
+./scripts/status.sh
+
+# Vérification de santé
+./scripts/health-check.sh
 ```
 
-Default URL: http://localhost:8080
+## Structure du projet
 
-### Start the Users Service
+```
+multimedia-quarkus/
+├── catalog/                 # Service catalogue
+├── users/                   # Service utilisateurs
+├── reviews/                 # Service avis (impératif)
+├── reactive-reviews/        # Service avis (réactif)
+├── notifications/           # Service batch notifications
+├── shared-config/           # Configuration partagée
+├── docker/                  # Configuration Docker
+│   ├── docker-compose.yml   # Infrastructure complète
+│   ├── prometheus/          # Configuration Prometheus
+│   ├── grafana/             # Dashboards Grafana
+│   └── otel-collector-config.yaml
+├── scripts/                 # Scripts d'administration
+│   ├── infra-up.sh          # Démarrer l'infrastructure
+│   ├── infra-down.sh        # Arrêter l'infrastructure
+│   ├── dev.sh               # Mode développement
+│   ├── start-all.sh         # Démarrer tous les services
+│   ├── stop-all.sh          # Arrêter tous les services
+│   ├── health-check.sh      # Vérifier la santé
+│   ├── status.sh            # Statut du système
+│   ├── logs.sh              # Consulter les logs
+│   ├── build.sh             # Compiler les services
+│   ├── clean.sh             # Nettoyer les artifacts
+│   └── env-check.sh         # Vérifier l'environnement
+├── build.gradle             # Configuration Gradle racine
+├── settings.gradle          # Configuration multi-modules
+└── gradle.properties        # Propriétés Gradle
+```
+
+## Infrastructure Docker
+
+### Services disponibles
+
+| Service | Port | URL |
+|---------|------|-----|
+| **Keycloak** | 8180 | http://localhost:8180/auth (admin/training) |
+| **PostgreSQL Catalog** | 5432 | `jdbc:postgresql://localhost:5432/catalog` |
+| **PostgreSQL Users** | 7654 | `jdbc:postgresql://localhost:7654/users` |
+| **PostgreSQL Reviews** | 6543 | `jdbc:postgresql://localhost:6543/reviews` |
+| **Redis** | 6379 | `redis://localhost:6379` |
+| **Consul** | 8500 | http://localhost:8500 |
+| **Kafka** | 29092 | `localhost:29092` |
+| **Kafka UI** | 8080 | http://localhost:8080 |
+| **Prometheus** | 9090 | http://localhost:9090 |
+| **Grafana** | 3000 | http://localhost:3000 (admin/admin) |
+| **Zipkin** | 9411 | http://localhost:9411 |
+| **PgAdmin** | 80 | http://library.local/pgadmin4 (via Traefik) |
+| **Traefik Dashboard** | 8090 | http://localhost:8090 |
+
+### Gestion de l'infrastructure
 
 ```bash
-cd users
-../gradlew quarkusDev
+# Démarrer
+./scripts/infra-up.sh
+
+# Arrêter
+./scripts/infra-down.sh
+
+# Arrêter et supprimer les volumes (⚠️ perte de données)
+./scripts/infra-down.sh -v
 ```
 
-Or from root:
+## Authentification (Keycloak)
 
-```bash
-./gradlew :users:quarkusDev
-```
+L'authentification est gérée par **Keycloak** via le protocole **OpenID Connect (OIDC)**.
 
-To avoid port conflicts, configure a different port in `users/src/main/resources/application.properties`:
+### Configuration
+
+| Paramètre | Valeur |
+|-----------|--------|
+| URL | http://localhost:8180/auth |
+| Realm | `training` |
+| Client ID | `quarkus-app` |
+| Admin | `admin` / `training` |
+
+### Utilisateurs de test
+
+| Utilisateur | Mot de passe | Rôles |
+|-------------|--------------|-------|
+| alice | alice | user, admin |
+
+### Intégration Quarkus
+
+Les services utilisent `quarkus-oidc` pour la sécurisation :
+
 ```properties
-quarkus.http.port=8081
+# application.properties
+quarkus.oidc.auth-server-url=http://localhost:8180/auth/realms/training
+quarkus.oidc.client-id=quarkus-app
+quarkus.oidc.application-type=web-app
+quarkus.oidc.roles.source=realm
 ```
 
-### Start the Reviews Service
+### Endpoints protégés (Catalog)
+
+| Endpoint | Accès |
+|----------|-------|
+| `GET /web/catalog` | Public |
+| `GET /web/catalog/{id}` | Public |
+| `GET /web/catalog/new` | Rôle `admin` |
+| `POST /web/catalog` | Rôle `admin` |
+| `GET /web/catalog/{id}/edit` | Rôle `admin` |
+| `POST /web/catalog/{id}` | Rôle `admin` |
+| `POST /web/catalog/{id}/delete` | Rôle `admin` |
+
+### Obtenir un token (API)
 
 ```bash
-cd reviews
-../gradlew quarkusDev
+# Token pour alice
+curl -X POST "http://localhost:8180/auth/realms/training/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=quarkus-app" \
+  -d "username=alice" \
+  -d "password=alice"
 ```
 
-Or from root:
+## Développement
+
+### Compilation
 
 ```bash
-./gradlew :reviews:quarkusDev
+# Compiler tous les services
+./scripts/build.sh
+
+# Compiler avec nettoyage
+./scripts/build.sh -c
+
+# Compiler un service spécifique
+./scripts/build.sh catalog
+
+# Compiler avec tests
+./scripts/build.sh -t
 ```
 
-To avoid port conflicts, configure a different port in `reviews/src/main/resources/application.properties`:
-```properties
-quarkus.http.port=8082
-```
-
-### Running Multiple Services Simultaneously
-
-Open separate terminal windows for each service or use a process manager like `tmux` or `screen`:
+### Mode développement (Hot Reload)
 
 ```bash
-# Terminal 1
-./gradlew :catalogue:quarkusDev
+# Lancer un service
+./scripts/dev.sh catalog
 
-# Terminal 2
-./gradlew :users:quarkusDev
+# Avec débogage
+./scripts/dev.sh users --debug
 
-# Terminal 3
-./gradlew :reviews:quarkusDev
+# Sur un port différent
+./scripts/dev.sh reviews -p 9083
 ```
 
-## Testing
-
-### Run All Tests
+### Tests
 
 ```bash
+# Tous les tests
 ./gradlew test
+
+# Tests d'un module
+./gradlew :catalog:test
+
+# Tests d'intégration
+./gradlew :catalog:test --tests "*IT"
 ```
 
-### Run Tests for a Specific Module
+## Observabilité
+
+### Tracing distribué (Zipkin)
+
+Les traces sont automatiquement collectées via OpenTelemetry et envoyées à Zipkin.
+
+- **Interface** : http://localhost:9411
+- **Protocole** : OTLP → OTel Collector → Zipkin
+- **Propagation** : W3C Trace Context
+
+Les logs incluent les identifiants de trace :
+```
+2024-01-15 10:30:45 INFO traceId=abc123, spanId=def456 [catalog] Request received
+```
+
+### Métriques (Prometheus/Grafana)
+
+Chaque service expose des métriques Micrometer au format Prometheus.
+
+- **Endpoint** : `http://localhost:{port}/q/metrics`
+- **Prometheus** : http://localhost:9090
+- **Grafana** : http://localhost:3000
+
+Métriques disponibles :
+- JVM (heap, threads, GC)
+- HTTP (requêtes, latence, codes de statut)
+- Base de données (connexions, requêtes)
+- Cache Redis
+
+### Health Checks
 
 ```bash
-./gradlew :catalogue:test
-./gradlew :users:test
-./gradlew :reviews:test
+# Vérifier tous les services
+./scripts/health-check.sh
+
+# Mode surveillance continue
+./scripts/health-check.sh -w
+
+# Détails verbose
+./scripts/health-check.sh -v
 ```
 
-## Dependencies
+Endpoints de santé :
+- Liveness : `http://localhost:{port}/q/health/live`
+- Readiness : `http://localhost:{port}/q/health/ready`
 
-Each module includes the following core dependencies:
+## Messaging (Kafka)
 
-- **Quarkus REST (RESTEasy Reactive)**: For building REST APIs
-- **Quarkus Arc**: CDI dependency injection container
-- **Quarkus JUnit5**: Testing framework integration
-- **REST Assured**: REST API testing
+### Topics
 
-Additional dependencies can be added per module in their respective `build.gradle` files.
+| Topic | Producteur | Consommateurs |
+|-------|------------|---------------|
+| `library-resources` | catalog | users, reviews |
+| `library-users` | users | reviews |
+| `library-reviews` | reviews | catalog |
 
-## Adding New Dependencies
+### Kafka UI
 
-### To All Modules
+Interface de gestion : http://localhost:8080
 
-Edit the root `build.gradle` file in the `subprojects` section:
+## Service Discovery (Consul)
 
-```gradle
-subprojects {
-    dependencies {
-        implementation 'io.quarkus:quarkus-some-extension'
-    }
-}
+Les services s'enregistrent automatiquement dans Consul avec :
+- Health check HTTP
+- Métadonnées (version, environnement)
+
+Interface Consul : http://localhost:8500
+
+### Configuration Stork (REST Client)
+
+Le service catalog utilise Stork pour la découverte de services :
+```properties
+quarkus.rest-client.reviews-service.url=stork://reviews-service
+quarkus.rest-client.users-service.url=stork://users-service
 ```
 
-### To a Specific Module
+## Scripts d'administration
 
-Edit the module's `build.gradle` file:
+Tous les scripts suivent les bonnes pratiques de la méthodologie **12-Factor App** et se trouvent dans le dossier `scripts/`.
 
-```gradle
-dependencies {
-    implementation 'io.quarkus:quarkus-hibernate-orm-panache'
-    implementation 'io.quarkus:quarkus-jdbc-postgresql'
-}
-```
+### Vue d'ensemble
 
-## Creating New Modules (Optional)
+| Script | Description |
+|--------|-------------|
+| `env-check.sh` | Vérifier l'environnement de développement |
+| `infra-up.sh` | Démarrer l'infrastructure Docker |
+| `infra-down.sh` | Arrêter l'infrastructure |
+| `dev.sh` | Lancer un service en mode développement |
+| `dev-all.sh` | Lancer plusieurs services en mode développement |
+| `start-all.sh` | Démarrer tous les microservices (production) |
+| `stop-all.sh` | Arrêter gracieusement les services |
+| `health-check.sh` | Vérifier l'état de santé |
+| `status.sh` | Afficher le statut complet |
+| `logs.sh` | Consulter les logs |
+| `build.sh` | Compiler les services |
+| `clean.sh` | Nettoyer les artifacts |
 
-To add a new module using Quarkus CLI:
+### Infrastructure (infra-up.sh / infra-down.sh)
 
 ```bash
-cd multimedia-library
-quarkus create app com.library:module-name --gradle --extension=resteasy-reactive,junit5 --no-code
+# Démarrer toute l'infrastructure
+./scripts/infra-up.sh
+
+# Démarrer uniquement les bases de données
+./scripts/infra-up.sh --only-db
+
+# Démarrer uniquement Kafka
+./scripts/infra-up.sh --only-messaging
+
+# Démarrer uniquement la stack d'observabilité
+./scripts/infra-up.sh --only-observability
+
+# Démarrer des services spécifiques
+./scripts/infra-up.sh postgres redis kafka
+
+# Arrêter l'infrastructure
+./scripts/infra-down.sh
+
+# Arrêter et supprimer les volumes (⚠️ perte de données)
+./scripts/infra-down.sh -v
+
+# Arrêter avec suppression des containers orphelins
+./scripts/infra-down.sh --remove-orphans
 ```
 
-Then update `settings.gradle` to include the new module:
+### Mode développement (dev.sh)
 
-```gradle
-include 'module-name'
-```
-
-## Project Configuration Files
-
-- **`settings.gradle`**: Defines the multi-module project structure
-- **`build.gradle`** (root): Centralized dependency and plugin management
-- **`gradle.properties`**: Quarkus version and shared properties
-- **Module `build.gradle`**: Module-specific dependencies and configuration
-
-## Useful Quarkus Dev Mode Features
-
-- **Live Reload**: Changes to Java code are automatically recompiled
-- **Dev UI**: Access at http://localhost:8080/q/dev
-- **Continuous Testing**: Press `r` in the terminal to run tests continuously
-
-## Packaging
-
-### Package All Modules
+Lance un service unique en mode Quarkus Dev avec hot-reload.
 
 ```bash
-./gradlew build
+# Démarrer le service catalog
+./scripts/dev.sh catalog
+
+# Avec débogage distant (port 5005)
+./scripts/dev.sh users --debug
+
+# Suspendre jusqu'à connexion du debugger
+./scripts/dev.sh users --debug --suspend
+
+# Sur un port personnalisé
+./scripts/dev.sh reviews -p 9083
+
+# Nettoyer avant de démarrer
+./scripts/dev.sh catalog --clean
 ```
 
-### Package a Specific Module
+**Services disponibles** : `catalog` (8081), `users` (8082), `reviews` (8083), `reactive-reviews` (8084), `notifications` (8085)
+
+### Mode développement multi-services (dev-all.sh)
+
+Lance plusieurs services en mode développement, chacun dans sa propre fenêtre de terminal.
 
 ```bash
-./gradlew :catalogue:build
+# Démarrer les services par défaut (catalog, users, reviews)
+./scripts/dev-all.sh
+
+# Démarrer uniquement catalog et users
+./scripts/dev-all.sh catalog users
+
+# Démarrer tous les 5 services
+./scripts/dev-all.sh all
+
+# Démarrer en arrière-plan (sans fenêtres de terminal)
+./scripts/dev-all.sh --no-terminal catalog users
+
+# Vérifier l'infrastructure sans démarrer les services
+./scripts/dev-all.sh --check
+
+# Lister les services disponibles
+./scripts/dev-all.sh --list
 ```
 
-The packaged application will be available in `<module>/build/quarkus-app/`.
+**Terminaux supportés** : gnome-terminal, konsole, xfce4-terminal, xterm, kitty, alacritty
 
-### Create Uber JAR
+### Mode production (start-all.sh / stop-all.sh)
 
-To create a standalone uber-jar:
+Compile et lance les services en tant que JARs Java.
 
 ```bash
-./gradlew build -Dquarkus.package.jar.type=uber-jar
+# Démarrer tous les services
+./scripts/start-all.sh
+
+# Démarrer en mode développement (quarkusDev)
+./scripts/start-all.sh -d
+
+# Démarrer en parallèle
+./scripts/start-all.sh --parallel
+
+# Exclure un service
+./scripts/start-all.sh --skip notifications
+
+# Démarrer uniquement certains services
+./scripts/start-all.sh --only catalog --only users
+
+# Arrêter tous les services
+./scripts/stop-all.sh
+
+# Arrêter des services spécifiques
+./scripts/stop-all.sh catalog users
+
+# Forcer l'arrêt (SIGKILL)
+./scripts/stop-all.sh -f
+
+# Avec timeout personnalisé
+./scripts/stop-all.sh --timeout 60
 ```
 
-## Running in Production
+### Compilation (build.sh)
 
 ```bash
-java -jar catalogue/build/quarkus-app/quarkus-run.jar
+# Compiler tous les services
+./scripts/build.sh
+
+# Nettoyer avant de compiler
+./scripts/build.sh -c
+
+# Compiler avec tests
+./scripts/build.sh -t
+
+# Compiler des services spécifiques
+./scripts/build.sh catalog users
+
+# Compilation parallèle
+./scripts/build.sh -p
+
+# Compiler des images natives (GraalVM requis)
+./scripts/build.sh --native catalog
+
+# Construire les images Docker
+./scripts/build.sh --docker
 ```
 
-## Docker Support
-
-Each module includes Dockerfiles generated by Quarkus in `src/main/docker/`.
-
-Build Docker image:
+### Surveillance (health-check.sh / status.sh)
 
 ```bash
-cd catalogue
-docker build -f src/main/docker/Dockerfile.jvm -t bibliotheque/catalogue .
+# Vérifier tous les services
+./scripts/health-check.sh
+
+# Mode surveillance continue (refresh toutes les 5s)
+./scripts/health-check.sh -w
+
+# Vérification détaillée
+./scripts/health-check.sh -v catalog
+
+# Vérifier uniquement l'infrastructure
+./scripts/health-check.sh --infra
+
+# Vérifier uniquement les microservices
+./scripts/health-check.sh --services
+
+# Sortie JSON
+./scripts/health-check.sh --json
+
+# Afficher le statut complet du système
+./scripts/status.sh
+
+# Statut court (services uniquement)
+./scripts/status.sh -s
 ```
 
-## Resources
+### Logs (logs.sh)
 
-- [Quarkus Documentation](https://quarkus.io/guides/)
-- [Gradle Multi-Project Builds](https://docs.gradle.org/current/userguide/multi_project_builds.html)
-- [Quarkus REST Guide](https://quarkus.io/guides/rest)
+```bash
+# Voir les logs d'un service
+./scripts/logs.sh catalog
 
-## License
+# Suivre les logs en temps réel
+./scripts/logs.sh -f catalog
 
-This project is provided as-is for educational and development purposes.
+# Afficher les N dernières lignes
+./scripts/logs.sh -n 50 catalog
+
+# Voir tous les logs agrégés
+./scripts/logs.sh --all
+
+# Logs de conteneurs Docker
+./scripts/logs.sh --docker kafka
+
+# Filtrer par pattern
+./scripts/logs.sh catalog --grep "ERROR"
+
+# Afficher uniquement les erreurs
+./scripts/logs.sh catalog --errors
+
+# Logs depuis un certain temps
+./scripts/logs.sh --docker kafka --since 1h
+```
+
+### Nettoyage (clean.sh)
+
+```bash
+# Nettoyer les artifacts de compilation
+./scripts/clean.sh
+
+# Nettoyer tout (build + logs + docker + gradle)
+./scripts/clean.sh -a
+
+# Nettoyer les fichiers de log
+./scripts/clean.sh --logs
+
+# Nettoyer les ressources Docker
+./scripts/clean.sh --docker
+
+# Nettoyer les caches Gradle
+./scripts/clean.sh --gradle
+
+# Sans confirmation
+./scripts/clean.sh -f -a
+```
+
+### Vérification de l'environnement (env-check.sh)
+
+```bash
+# Vérifier que l'environnement est prêt
+./scripts/env-check.sh
+```
+
+Ce script vérifie : Java 21+, Docker, Docker Compose, Gradle, et les ports disponibles.
+
+## Configuration
+
+### Profils Quarkus
+
+- `%dev` : Développement local (Dev Services désactivés)
+- `%test` : Tests automatisés
+- `%prod` : Production
+
+### Variables d'environnement
+
+Le fichier `docker/.env` contient les variables de configuration :
+
+```bash
+# Base de données
+APP_DB_USER=training
+APP_DB_PASSWORD=training
+
+# Grafana
+GRAFANA_USER=admin
+GRAFANA_PASSWORD=admin
+```
+
+### Configuration partagée
+
+Le module `shared-config` contient la configuration commune :
+- Connexion PostgreSQL
+- Configuration Redis
+- OpenTelemetry
+- Micrometer/Prometheus
+- Format des logs
+
+## Dépannage
+
+### Le service ne démarre pas
+
+```bash
+# Vérifier les ports
+./scripts/health-check.sh --services
+
+# Consulter les logs
+./scripts/logs.sh catalog --errors
+```
+
+### L'infrastructure ne répond pas
+
+```bash
+# Vérifier Docker
+docker ps
+
+# Redémarrer l'infrastructure
+./scripts/infra-down.sh && ./scripts/infra-up.sh
+```
+
+### Problèmes de mémoire
+
+```bash
+# Vérifier les ressources
+./scripts/status.sh
+
+# Nettoyer Docker
+./scripts/clean.sh --docker
+```
+
+### Logs et traces
+
+```bash
+# Suivre les logs en temps réel
+./scripts/logs.sh -f catalog
+
+# Voir uniquement les erreurs
+./scripts/logs.sh catalog --errors
+
+# Logs Docker
+./scripts/logs.sh --docker kafka
+```
+
+## API REST
+
+### Catalog Service (8081)
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/resources` | Liste des ressources |
+| GET | `/api/resources/{id}` | Détail d'une ressource |
+| POST | `/api/resources` | Créer une ressource |
+| PUT | `/api/resources/{id}` | Modifier une ressource |
+| DELETE | `/api/resources/{id}` | Supprimer une ressource |
+
+### Users Service (8082)
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/users` | Liste des utilisateurs |
+| GET | `/api/users/{id}` | Détail d'un utilisateur |
+| POST | `/api/users` | Créer un utilisateur |
+
+### Reviews Service (8083)
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/reviews` | Liste des avis |
+| GET | `/api/reviews/resource/{id}` | Avis d'une ressource |
+| POST | `/api/reviews` | Créer un avis |
+
+## Technologies utilisées
+
+- **Quarkus 3.x** - Framework Java supersonic
+- **Gradle 8.x** - Build multi-modules
+- **PostgreSQL 16** - Base de données
+- **Redis 7** - Cache distribué
+- **Apache Kafka 3.9** - Messaging
+- **Consul 1.19** - Service Discovery
+- **OpenTelemetry** - Tracing distribué
+- **Zipkin 3.4** - Backend de traces
+- **Prometheus 2.54** - Collecte de métriques
+- **Grafana 11.2** - Visualisation
+- **SmallRye Stork** - Load balancing client-side
+
+## Ressources
+
+- [Documentation Quarkus](https://quarkus.io/guides/)
+- [12-Factor App](https://12factor.net/fr/)
+- [OpenTelemetry](https://opentelemetry.io/)
+- [SmallRye Stork](https://smallrye.io/smallrye-stork/)
+
+## Licence
+
+Ce projet est fourni à des fins éducatives et de formation.
