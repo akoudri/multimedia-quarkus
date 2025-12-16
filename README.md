@@ -11,6 +11,12 @@ Projet mono-repo Gradle contenant une architecture microservices complète pour 
                                     │
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
+│                            KEYCLOAK (IAM)                                    │
+│                              :8180/auth                                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
 │                         MICROSERVICES                                        │
 ├─────────────┬─────────────┬─────────────┬─────────────────┬─────────────────┤
 │   Catalog   │    Users    │   Reviews   │ Reactive Reviews│  Notifications  │
@@ -120,6 +126,7 @@ multimedia-quarkus/
 
 | Service | Port | URL |
 |---------|------|-----|
+| **Keycloak** | 8180 | http://localhost:8180/auth (admin/training) |
 | **PostgreSQL Catalog** | 5432 | `jdbc:postgresql://localhost:5432/catalog` |
 | **PostgreSQL Users** | 7654 | `jdbc:postgresql://localhost:7654/users` |
 | **PostgreSQL Reviews** | 6543 | `jdbc:postgresql://localhost:6543/reviews` |
@@ -130,7 +137,8 @@ multimedia-quarkus/
 | **Prometheus** | 9090 | http://localhost:9090 |
 | **Grafana** | 3000 | http://localhost:3000 (admin/admin) |
 | **Zipkin** | 9411 | http://localhost:9411 |
-| **PgAdmin** | - | Via Traefik |
+| **PgAdmin** | 80 | http://library.local/pgadmin4 (via Traefik) |
+| **Traefik Dashboard** | 8090 | http://localhost:8090 |
 
 ### Gestion de l'infrastructure
 
@@ -143,6 +151,61 @@ multimedia-quarkus/
 
 # Arrêter et supprimer les volumes (⚠️ perte de données)
 ./scripts/infra-down.sh -v
+```
+
+## Authentification (Keycloak)
+
+L'authentification est gérée par **Keycloak** via le protocole **OpenID Connect (OIDC)**.
+
+### Configuration
+
+| Paramètre | Valeur |
+|-----------|--------|
+| URL | http://localhost:8180/auth |
+| Realm | `training` |
+| Client ID | `quarkus-app` |
+| Admin | `admin` / `training` |
+
+### Utilisateurs de test
+
+| Utilisateur | Mot de passe | Rôles |
+|-------------|--------------|-------|
+| alice | alice | user, admin |
+
+### Intégration Quarkus
+
+Les services utilisent `quarkus-oidc` pour la sécurisation :
+
+```properties
+# application.properties
+quarkus.oidc.auth-server-url=http://localhost:8180/auth/realms/training
+quarkus.oidc.client-id=quarkus-app
+quarkus.oidc.application-type=web-app
+quarkus.oidc.roles.source=realm
+```
+
+### Endpoints protégés (Catalog)
+
+| Endpoint | Accès |
+|----------|-------|
+| `GET /web/catalog` | Public |
+| `GET /web/catalog/{id}` | Public |
+| `GET /web/catalog/new` | Rôle `admin` |
+| `POST /web/catalog` | Rôle `admin` |
+| `GET /web/catalog/{id}/edit` | Rôle `admin` |
+| `POST /web/catalog/{id}` | Rôle `admin` |
+| `POST /web/catalog/{id}/delete` | Rôle `admin` |
+
+### Obtenir un token (API)
+
+```bash
+# Token pour alice
+curl -X POST "http://localhost:8180/auth/realms/training/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=quarkus-app" \
+  -d "username=alice" \
+  -d "password=alice"
 ```
 
 ## Développement
@@ -267,7 +330,9 @@ quarkus.rest-client.users-service.url=stork://users-service
 
 ## Scripts d'administration
 
-Tous les scripts suivent les bonnes pratiques de la méthodologie **12-Factor App**.
+Tous les scripts suivent les bonnes pratiques de la méthodologie **12-Factor App** et se trouvent dans le dossier `scripts/`.
+
+### Vue d'ensemble
 
 | Script | Description |
 |--------|-------------|
@@ -275,7 +340,8 @@ Tous les scripts suivent les bonnes pratiques de la méthodologie **12-Factor Ap
 | `infra-up.sh` | Démarrer l'infrastructure Docker |
 | `infra-down.sh` | Arrêter l'infrastructure |
 | `dev.sh` | Lancer un service en mode développement |
-| `start-all.sh` | Démarrer tous les microservices |
+| `dev-all.sh` | Lancer plusieurs services en mode développement |
+| `start-all.sh` | Démarrer tous les microservices (production) |
 | `stop-all.sh` | Arrêter gracieusement les services |
 | `health-check.sh` | Vérifier l'état de santé |
 | `status.sh` | Afficher le statut complet |
@@ -283,7 +349,227 @@ Tous les scripts suivent les bonnes pratiques de la méthodologie **12-Factor Ap
 | `build.sh` | Compiler les services |
 | `clean.sh` | Nettoyer les artifacts |
 
-Documentation complète : [scripts/README.md](scripts/README.md)
+### Infrastructure (infra-up.sh / infra-down.sh)
+
+```bash
+# Démarrer toute l'infrastructure
+./scripts/infra-up.sh
+
+# Démarrer uniquement les bases de données
+./scripts/infra-up.sh --only-db
+
+# Démarrer uniquement Kafka
+./scripts/infra-up.sh --only-messaging
+
+# Démarrer uniquement la stack d'observabilité
+./scripts/infra-up.sh --only-observability
+
+# Démarrer des services spécifiques
+./scripts/infra-up.sh postgres redis kafka
+
+# Arrêter l'infrastructure
+./scripts/infra-down.sh
+
+# Arrêter et supprimer les volumes (⚠️ perte de données)
+./scripts/infra-down.sh -v
+
+# Arrêter avec suppression des containers orphelins
+./scripts/infra-down.sh --remove-orphans
+```
+
+### Mode développement (dev.sh)
+
+Lance un service unique en mode Quarkus Dev avec hot-reload.
+
+```bash
+# Démarrer le service catalog
+./scripts/dev.sh catalog
+
+# Avec débogage distant (port 5005)
+./scripts/dev.sh users --debug
+
+# Suspendre jusqu'à connexion du debugger
+./scripts/dev.sh users --debug --suspend
+
+# Sur un port personnalisé
+./scripts/dev.sh reviews -p 9083
+
+# Nettoyer avant de démarrer
+./scripts/dev.sh catalog --clean
+```
+
+**Services disponibles** : `catalog` (8081), `users` (8082), `reviews` (8083), `reactive-reviews` (8084), `notifications` (8085)
+
+### Mode développement multi-services (dev-all.sh)
+
+Lance plusieurs services en mode développement, chacun dans sa propre fenêtre de terminal.
+
+```bash
+# Démarrer les services par défaut (catalog, users, reviews)
+./scripts/dev-all.sh
+
+# Démarrer uniquement catalog et users
+./scripts/dev-all.sh catalog users
+
+# Démarrer tous les 5 services
+./scripts/dev-all.sh all
+
+# Démarrer en arrière-plan (sans fenêtres de terminal)
+./scripts/dev-all.sh --no-terminal catalog users
+
+# Vérifier l'infrastructure sans démarrer les services
+./scripts/dev-all.sh --check
+
+# Lister les services disponibles
+./scripts/dev-all.sh --list
+```
+
+**Terminaux supportés** : gnome-terminal, konsole, xfce4-terminal, xterm, kitty, alacritty
+
+### Mode production (start-all.sh / stop-all.sh)
+
+Compile et lance les services en tant que JARs Java.
+
+```bash
+# Démarrer tous les services
+./scripts/start-all.sh
+
+# Démarrer en mode développement (quarkusDev)
+./scripts/start-all.sh -d
+
+# Démarrer en parallèle
+./scripts/start-all.sh --parallel
+
+# Exclure un service
+./scripts/start-all.sh --skip notifications
+
+# Démarrer uniquement certains services
+./scripts/start-all.sh --only catalog --only users
+
+# Arrêter tous les services
+./scripts/stop-all.sh
+
+# Arrêter des services spécifiques
+./scripts/stop-all.sh catalog users
+
+# Forcer l'arrêt (SIGKILL)
+./scripts/stop-all.sh -f
+
+# Avec timeout personnalisé
+./scripts/stop-all.sh --timeout 60
+```
+
+### Compilation (build.sh)
+
+```bash
+# Compiler tous les services
+./scripts/build.sh
+
+# Nettoyer avant de compiler
+./scripts/build.sh -c
+
+# Compiler avec tests
+./scripts/build.sh -t
+
+# Compiler des services spécifiques
+./scripts/build.sh catalog users
+
+# Compilation parallèle
+./scripts/build.sh -p
+
+# Compiler des images natives (GraalVM requis)
+./scripts/build.sh --native catalog
+
+# Construire les images Docker
+./scripts/build.sh --docker
+```
+
+### Surveillance (health-check.sh / status.sh)
+
+```bash
+# Vérifier tous les services
+./scripts/health-check.sh
+
+# Mode surveillance continue (refresh toutes les 5s)
+./scripts/health-check.sh -w
+
+# Vérification détaillée
+./scripts/health-check.sh -v catalog
+
+# Vérifier uniquement l'infrastructure
+./scripts/health-check.sh --infra
+
+# Vérifier uniquement les microservices
+./scripts/health-check.sh --services
+
+# Sortie JSON
+./scripts/health-check.sh --json
+
+# Afficher le statut complet du système
+./scripts/status.sh
+
+# Statut court (services uniquement)
+./scripts/status.sh -s
+```
+
+### Logs (logs.sh)
+
+```bash
+# Voir les logs d'un service
+./scripts/logs.sh catalog
+
+# Suivre les logs en temps réel
+./scripts/logs.sh -f catalog
+
+# Afficher les N dernières lignes
+./scripts/logs.sh -n 50 catalog
+
+# Voir tous les logs agrégés
+./scripts/logs.sh --all
+
+# Logs de conteneurs Docker
+./scripts/logs.sh --docker kafka
+
+# Filtrer par pattern
+./scripts/logs.sh catalog --grep "ERROR"
+
+# Afficher uniquement les erreurs
+./scripts/logs.sh catalog --errors
+
+# Logs depuis un certain temps
+./scripts/logs.sh --docker kafka --since 1h
+```
+
+### Nettoyage (clean.sh)
+
+```bash
+# Nettoyer les artifacts de compilation
+./scripts/clean.sh
+
+# Nettoyer tout (build + logs + docker + gradle)
+./scripts/clean.sh -a
+
+# Nettoyer les fichiers de log
+./scripts/clean.sh --logs
+
+# Nettoyer les ressources Docker
+./scripts/clean.sh --docker
+
+# Nettoyer les caches Gradle
+./scripts/clean.sh --gradle
+
+# Sans confirmation
+./scripts/clean.sh -f -a
+```
+
+### Vérification de l'environnement (env-check.sh)
+
+```bash
+# Vérifier que l'environnement est prêt
+./scripts/env-check.sh
+```
+
+Ce script vérifie : Java 21+, Docker, Docker Compose, Gradle, et les ports disponibles.
 
 ## Configuration
 
