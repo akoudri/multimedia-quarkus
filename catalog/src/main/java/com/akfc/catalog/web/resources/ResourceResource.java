@@ -5,6 +5,7 @@ import com.akfc.catalog.dto.CreateResourceRequest;
 import com.akfc.catalog.dto.ResourceResponse;
 import com.akfc.catalog.dto.UpdateResourceRequest;
 import com.akfc.catalog.services.ResourceService;
+import io.micrometer.core.annotation.Counted;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -71,6 +72,11 @@ public class ResourceResource {
      *   Example: {"message": "...", "code": "INTERNAL_ERROR", "details": {"correlationId": "..."}}
      */
     @POST
+    @Counted(
+            value = "business.reviews.created",
+            description = "Nombre total de reviews créées",
+            extraTags = {"status", "pending"} // Tag statique utile pour le filtrage
+    )
     @Operation(
         summary = "Create a new resource",
         description = "Creates a new multimedia resource (book, movie, or music) in the catalog"
