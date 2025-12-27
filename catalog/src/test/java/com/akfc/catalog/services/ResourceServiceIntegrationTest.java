@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.*;
  * but more comprehensive than unit tests.
  */
 @QuarkusTest
-@Disabled("Requires Docker Dev Services - disabled due to Docker API version incompatibility")
+//@Disabled("Requires Docker Dev Services - disabled due to Docker API version incompatibility")
 @DisplayName("ResourceService Integration Tests (@QuarkusTest)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ResourceServiceIntegrationTest {
